@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Rate Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+        h2 {
+            text-align: center;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Interactive Rate Calculator</h2>
+
+    <label for="destination">Select Destination:</label>
+    <select id="destination"></select>
+
+    <label for="volume">Enter Volume (m³):</label>
+    <input type="number" id="volume" value="1" min="1">
+
+    <label>
+        <input type="checkbox" id="unpacking"> Include Unpacking (€12/m³)
+    </label>
+    
+    <label>
+        <input type="checkbox" id="storage"> Include Storage (€8/m³, min 5m³)
+    </label>
+
+    <button onclick="calculate()">Calculate</button>
+
+    <div class="result" id="result"></div>
+
+    <script>
+        const rates = {
+            "Belgium - Netherlands - Luxembourg": [550, 135, 130],
+            "Germany": [650, 150, 145],
+            "France": [750, 165, 150],
+            "Denmark": [750, 165, 150],
+            "UK (South of Birmingham)": [750, 165, 150],
+            "Switzerland": [850, 180, 165],
+            "Austria": [850, 180, 165],
+            "Czech Republic": [850, 180, 165],
+            "France Brittany": [900, 205, 185],
+            "UK (North of Birmingham)": [900, 205, 185],
+            "Spain": [900, 205, 185],
+            "Portugal": [900, 205, 185],
+            "Italy (North of Rome)": [900, 205, 185],
+            "Hungary": [900, 205, 185],
+            "Slovenia": [900, 205, 185],
+            "Poland": [900, 205, 185],
+            "Ireland": [900, 205, 185],
+            "Croatia": [1100, 225, 205],
+            "Slovakia": [1100, 225, 205],
+            "Finland (South)": [1100, 225, 205],
+            "Sweden (South)": [1100, 225, 205],
+            "Norway (South)": [1100, 225, 205],
+            "Romania": [1100, 250, 225],
+            "Bulgaria": [1100, 250, 225],
+            "Greece Mainland": [1100, 250, 225],
+            "Italy (Rome and South of Rome)": [1100, 275, 250],
+            "Estonia": [1350, 250, 225],
+            "Latvia": [1350, 250, 225],
+            "Lithuania": [1350, 250, 225],
+            "Sweden (Umea - Lulea Area)": [1350, 275, 250],
+            "Norway (Trondheim - Tromso)": [1500, 275, 250],
+            "Spain (Balearic Islands)": [1350, 275, 250],
+            "Bosnia": [1650, 285, 260],
+            "North Macedonia": [1650, 285, 260],
+            "Albania": [1650, 285, 260],
+            "Serbia": [1650, 285, 260],
+            "Montenegro": [1650, 285, 260],
+            "Italy (Sicily)": [1650, 285, 260],
+            "Malta": [1750, 300, 275],
+            "Greece (Islands - Rhodos, Crete, Kos)": [1750, 300, 275],
+            "Kazakhstan (Almaty)": [2200, 400, 300],
+            "Turkey (Istanbul)": [2200, 400, 300],
+            "Kyrgyzstan": [2500, 500, 400],
+            "Cyprus (South/Limassol)": [2500, 500, 400],
+            "Madeira": [2500, 500, 400],
+            "Uzbekistan": [2500, 500, 400],
+            "Tajikistan": [2500, 500, 400],
+            "Azerbaijan": [3000, 600, 500],
+            "Canary Islands": [1750, 300, 275],
+            "Georgia": [2200, 400, 300],
+            "Armenia": [2200, 400, 300]
+        };
+
+        const destinationSelect = document.getElementById("destination");
+        for (const dest in rates) {
+            let option = document.createElement("option");
+            option.value = dest;
+            option.text = dest;
+            destinationSelect.add(option);
+        }
+
+        function calculate() {
+            const destination = document.getElementById("destination").value;
+            const volume = parseFloat(document.getElementById("volume").value);
+            const unpacking = document.getElementById("unpacking").checked;
+            const storage = document.getElementById("storage").checked;
+
+            if (!rates[destination]) {
+                document.getElementById("result").innerHTML = "Please select a valid destination.";
+                return;
+            }
+
+            const minCharge = rates[destination][0];
+            const ratePerM3 = volume < 10 ? rates[destination][1] : rates[destination][2];
+            const baseCost = Math.max(minCharge, ratePerM3 * volume);
+            const unpackingCost = unpacking ? 12 * volume : 0;
+            const storageCost = storage ? 8 * Math.max(volume, 5) : 0;
+            const totalCost = baseCost + unpackingCost + storageCost;
+
+            document.getElementById("result").innerHTML = `
+                <strong>Calculation:</strong><br>
+                Base Cost: €${baseCost.toFixed(2)} (Min Charge: €${minCharge}, Volume: ${volume}m³ @ €${ratePerM3}/m³)<br>
+                ${unpacking ? `Unpacking Cost: €${unpackingCost.toFixed(2)}<br>` : ""}
+                ${storage ? `Storage Cost: €${storageCost.toFixed(2)}<br>` : ""}
+                <strong>Total Cost: €${totalCost.toFixed(2)}</strong>
+            `;
+        }
+    </script>
+
+</body>
+</html>
+
