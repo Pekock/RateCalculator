@@ -37,6 +37,11 @@
             gap: 8px;
             margin-bottom: 4px;
         }
+        .rate-detail {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 2px;
+        }
         .total-row {
             border-top: 1px solid #ddd;
             font-weight: bold;
@@ -46,6 +51,7 @@
     </style>
 </head>
 <body class="bg-gray-100 p-4">
+    <!-- [Previous HTML content remains the same until the script tag] -->
     <div class="card">
         <h1 class="text-2xl font-bold mb-6">Moving Services Rate Calculator</h1>
         
@@ -124,6 +130,15 @@
             </div>
         </div>
 
+        <div class="grid grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="parkingPermit">
+                    Parking Permit Required
+                </label>
+            </div>
+        </div>
+
         <div id="costBreakdown" class="cost-breakdown hidden">
             <h3 class="text-xl font-bold mb-4">Cost Breakdown</h3>
             <div id="breakdownDetails"></div>
@@ -170,15 +185,17 @@
             const includeSIT = document.getElementById('sit').checked;
             const needsAccess = document.getElementById('accessCharge').checked;
             const needsStair = document.getElementById('stairCarry').checked;
+            const needsParking = document.getElementById('parkingPermit').checked;
 
             if (!weight || !shipmentType) return;
 
             const lbs = convertToLbs(weight, unit);
+            const weightBlocks = Math.ceil(lbs / 100);
             const baseRate = getBaseRate(lbs);
-            const whRate = includeWH ? Math.max(54, Math.ceil(lbs / 100) * 9) : 0;
-            const sitRate = includeSIT ? Math.max(48, Math.ceil(lbs / 100) * 8) : 0;
-            const accessRate = needsAccess ? Math.max(33, Math.ceil(lbs / 100) * 5.5) : 0;
-            const stairRate = needsStair ? Math.max(33, Math.ceil(lbs / 100) * 5.5) : 0;
+            const whRate = includeWH ? Math.max(54, weightBlocks * 9) : 0;
+            const sitRate = includeSIT ? Math.max(48, weightBlocks * 8) : 0;
+            const accessRate = needsAccess ? Math.max(33, weightBlocks * 5.5) : 0;
+            const stairRate = needsStair ? Math.max(33, weightBlocks * 5.5) : 0;
 
             let pdCharge = 0;
             switch(shipmentType) {
@@ -194,13 +211,21 @@
             }
 
             let vehicleCharge = 0;
+            let parkingCharge = 0;
+            
             switch(vehicle) {
-                case 'car': vehicleCharge = 300; break;
-                case 'motorcycle': vehicleCharge = 200; break;
+                case 'car': 
+                    vehicleCharge = 300;
+                    if (needsParking) parkingCharge = 175;
+                    break;
+                case 'motorcycle': 
+                    vehicleCharge = 200;
+                    if (needsParking) parkingCharge = 95;
+                    break;
             }
 
             const total = baseRate + whRate + sitRate + accessRate + stairRate + 
-                         pdCharge + pianoCharge + vehicleCharge;
+                         pdCharge + pianoCharge + vehicleCharge + parkingCharge;
 
             displayBreakdown({
                 baseRate,
@@ -211,9 +236,12 @@
                 pdCharge,
                 pianoCharge,
                 vehicleCharge,
+                parkingCharge,
                 total,
                 unitRate: getUnitRate(lbs),
-                shipmentType
+                shipmentType,
+                weightBlocks,
+                lbs
             });
         }
 
@@ -225,7 +253,10 @@
             let html = `
                 <div class="cost-row">
                     <div>Base Rate:</div>
-                    <div>${formatMoney(calc.baseRate)} (${calc.unitRate.toFixed(2)}/100 lbs)</div>
+                    <div>
+                        ${formatMoney(calc.baseRate)}
+                        <div class="rate-detail">${calc.unitRate.toFixed(2)}/100 lbs (${Math.round(calc.lbs)} lbs total)</div>
+                    </div>
                 </div>
             `;
 
@@ -233,7 +264,10 @@
                 html += `
                     <div class="cost-row">
                         <div>Warehouse Handling:</div>
-                        <div>${formatMoney(calc.whRate)}</div>
+                        <div>
+                            ${formatMoney(calc.whRate)}
+                            <div class="rate-detail">$9.00/cwt × ${calc.weightBlocks} cwt (min $54)</div>
+                        </div>
                     </div>
                 `;
             }
@@ -242,7 +276,10 @@
                 html += `
                     <div class="cost-row">
                         <div>SIT Rate:</div>
-                        <div>${formatMoney(calc.sitRate)}</div>
+                        <div>
+                            ${formatMoney(calc.sitRate)}
+                            <div class="rate-detail">$8.00/cwt × ${calc.weightBlocks} cwt (min $48)</div>
+                        </div>
                     </div>
                 `;
             }
@@ -251,7 +288,10 @@
                 html += `
                     <div class="cost-row">
                         <div>Access Charge:</div>
-                        <div>${formatMoney(calc.accessRate)}</div>
+                        <div>
+                            ${formatMoney(calc.accessRate)}
+                            <div class="rate-detail">$5.50/cwt × ${calc.weightBlocks} cwt (min $33)</div>
+                        </div>
                     </div>
                 `;
             }
@@ -260,7 +300,10 @@
                 html += `
                     <div class="cost-row">
                         <div>Stair Carry Charge:</div>
-                        <div>${formatMoney(calc.stairRate)}</div>
+                        <div>
+                            ${formatMoney(calc.stairRate)}
+                            <div class="rate-detail">$5.50/cwt × ${calc.weightBlocks} cwt (min $33)</div>
+                        </div>
                     </div>
                 `;
             }
@@ -290,6 +333,18 @@
                         <div>${formatMoney(calc.vehicleCharge)}</div>
                     </div>
                 `;
+                
+                if (calc.parkingCharge > 0) {
+                    html += `
+                        <div class="cost-row">
+                            <div>Parking Permit:</div>
+                            <div>
+                                ${formatMoney(calc.parkingCharge)}
+                                <div class="rate-detail">Required for vehicle transportation</div>
+                            </div>
+                        </div>
+                    `;
+                }
             }
 
             html += `
@@ -310,6 +365,3 @@
     </script>
 </body>
 </html>
-Last edited just now
-
-
