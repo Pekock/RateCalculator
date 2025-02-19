@@ -51,7 +51,6 @@
     </style>
 </head>
 <body class="bg-gray-100 p-4">
-    <!-- [Previous HTML content remains the same until the script tag] -->
     <div class="card">
         <h1 class="text-2xl font-bold mb-6">John Gray Import Tariff 2025</h1>
         
@@ -211,18 +210,13 @@
             }
 
             let vehicleCharge = 0;
-            let parkingCharge = 0;
-            
             switch(vehicle) {
-                case 'car': 
-                    vehicleCharge = 300;
-                    if (needsParking) parkingCharge = 175;
-                    break;
-                case 'motorcycle': 
-                    vehicleCharge = 200;
-                    if (needsParking) parkingCharge = 95;
-                    break;
+                case 'car': vehicleCharge = 300; break;
+                case 'motorcycle': vehicleCharge = 200; break;
             }
+
+            // Flat parking permit fee if needed
+            const parkingCharge = needsParking ? 350 : 0;
 
             const total = baseRate + whRate + sitRate + accessRate + stairRate + 
                          pdCharge + pianoCharge + vehicleCharge + parkingCharge;
@@ -333,18 +327,15 @@
                         <div>${formatMoney(calc.vehicleCharge)}</div>
                     </div>
                 `;
-                
-                if (calc.parkingCharge > 0) {
-                    html += `
-                        <div class="cost-row">
-                            <div>Parking Permit:</div>
-                            <div>
-                                ${formatMoney(calc.parkingCharge)}
-                                <div class="rate-detail">Required for vehicle transportation</div>
-                            </div>
-                        </div>
-                    `;
-                }
+            }
+
+            if (calc.parkingCharge > 0) {
+                html += `
+                    <div class="cost-row">
+                        <div>Parking Permit:</div>
+                        <div>${formatMoney(calc.parkingCharge)}</div>
+                    </div>
+                `;
             }
 
             html += `
