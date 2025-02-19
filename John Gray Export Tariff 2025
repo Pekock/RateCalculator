@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>John Gray Export Tariff 2025</title>
+	<style>
+    	body {
+            font-family: Arial, sans-serif;
+        	max-width: 800px;
+        	margin: 0 auto;
+        	padding: 20px;
+    	}
+    	.calculator {
+        	border: 1px solid #ccc;
+        	padding: 20px;
+            border-radius: 8px;
+    	}
+    	.form-group {
+            margin-bottom: 15px;
+    	}
+    	label {
+        	display: block;
+            margin-bottom: 5px;
+    	}
+        input[type="number"], select {
+        	width: 200px;
+        	padding: 8px;
+        	border: 1px solid #ccc;
+            border-radius: 4px;
+    	}
+        .checkbox-group {
+        	margin: 10px 0;
+    	}
+    	.summary {
+            margin-top: 20px;
+            border-top: 2px solid #ccc;
+            padding-top: 20px;
+    	}
+    	.line-item {
+        	display: flex;
+            justify-content: space-between;
+        	margin: 5px 0;
+        	padding: 5px 0;
+            border-bottom: 1px solid #eee;
+    	}
+    	.total {
+            font-weight: bold;
+        	font-size: 1.2em;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #000;
+    	}
+	</style>
+</head>
+<body>
+	<div class="calculator">
+ 	   <h2>John Gray Export Tariff 2025</h2>
+    	
+    	<div class="form-group">
+        	<label for="weight">Weight/Volume:</label>
+        	<input type="number" id="weight" min="0" step="0.01">
+        	<select id="unit">
+                <option value="LBS">LBS</option>
+                <option value="KG">KG</option>
+                <option value="CBM">CBM</option>
+                <option value="CUFT">CUFT</option>
+            </select>
+    	</div>
+ 
+    	<div class="form-group">
+        	<label for="shipmentType">Shipment Type:</label>
+        	<select id="shipmentType">
+                <option value="">Select Type</option>
+                <option value="AIR">AIR</option>
+                <option value="LCL">LCL</option>
+                <option value="SEA">SEA</option>
+            </select>
+    	</div>
+ 
+    	<div class="form-group">
+        	<label for="pianoType">Piano Handling:</label>
+        	<select id="pianoType">
+                <option value="none">No Piano</option>
+                <option value="upright">Upright Piano ($275)</option>
+                <option value="grand">Baby Grand Piano ($450)</option>
+            </select>
+    	</div>
+ 
+    	<div class="checkbox-group">
+            <div>
+                <input type="checkbox" id="whh">
+                <label for="whh">Include Warehouse Handling</label>
+            </div>
+            <div>
+                <input type="checkbox" id="sit">
+                <label for="sit">Include Storage in Transit</label>
+            </div>
+            <div>
+                <input type="checkbox" id="accessCharge">
+                <label for="accessCharge">Access Charge (long walk/elevator)</label>
+            </div>
+            <div>
+                <input type="checkbox" id="stairCharge">
+                <label for="stairCharge">Stair Carry (over 2nd floor)</label>
+            </div>
+            <div>
+                <input type="checkbox" id="parkingPermit">
+                <label for="parkingPermit">Parking Permit ($375)</label>
+            </div>
+    	</div>
+ 
+    	<div class="form-group">
+            <label>Container Requirements:</label>
+            <div>
+                <input type="checkbox" id="cos">
+                <label for="cos">COS Carton ($200)</label>
+            </div>
+            <div>
+                <input type="checkbox" id="co7">
+                <label for="co7">CO7 Carton ($250)</label>
+            </div>
+            <div>
+                <input type="checkbox" id="co8">
+                <label for="co8">CO8 Carton ($250)</label>
+            </div>
+            <div>
+                <input type="checkbox" id="liftvan">
+                <label for="liftvan">Lift Van ($450)</label>
+            </div>
+    	</div>
+ 
+    	<div class="checkbox-group">
+            <div>
+                <input type="checkbox" id="vehicle">
+                <label for="vehicle">Car Block and Brace ($350)</label>
+            </div>
+            <div>
+                <input type="checkbox" id="motorcycle">
+                <label for="motorcycle">Motorcycle Block and Brace ($250)</label>
+            </div>
+    	</div>
+ 
+    	<div class="summary" id="summary">
+            <h3>Calculation Summary</h3>
+        	<div id="lineItems"></div>
+        	<div class="total" id="total"></div>
+    	</div>
+	</div>
+ 
+	<script>
+    	function convertToLbs(value, unit) {
+        	if (!value) return 0;
+        	const numValue = parseFloat(value);
+        	switch (unit) {
+            	case 'KG':
+                    return numValue * 2.20462;
+            	case 'CBM':
+                    return numValue * 35.315 * 7;
+            	case 'CUFT':
+                    return numValue * 7;
+                default:
+                    return numValue;
+        	}
+    	}
+ 
+    	function calculateBaseRate(lbs) {
+        	if (lbs <= 600) return 442.75;
+        	if (lbs <= 999) return lbs * (69.57/100);  // $69.57 per 100 lbs
+        	if (lbs <= 3999) return lbs * (62.59/100); // $62.59 per 100 lbs
+        	if (lbs <= 6999) return lbs * (59.84/100); // $59.84 per 100 lbs
+        	if (lbs <= 9999) return lbs * (58.41/100); // $58.41 per 100 lbs
+        	return lbs * (57.03/100);              	// $57.03 per 100 lbs
+    	}
+ 
+    	function calculateCharges() {
+        	const weight = document.getElementById('weight').value;
+        	const unit = document.getElementById('unit').value;
+        	const lbs = convertToLbs(weight, unit);
+        	
+        	const charges = [];
+ 
+        	// Base Rate
+        	if (lbs > 0) {
+            	const baseRate = calculateBaseRate(lbs);
+            	let rateDescription;
+            	if (lbs <= 600) {
+                    rateDescription = `Base Rate (${lbs.toFixed(2)} lbs @ Minimum charge)`;
+            	} else {
+                    const ratePer100 = baseRate / (lbs / 100);
+                    rateDescription = `Base Rate (${lbs.toFixed(2)} lbs @ $${ratePer100.toFixed(2)}/100 lbs)`;
+            	}
+                charges.push({
+                    description: rateDescription,
+                    amount: baseRate
+            	});
+        	}
+ 
+        	// Warehouse Handling
+        	if (document.getElementById('whh').checked && lbs > 0) {
+            	const hundredWeightUnits = Math.ceil(lbs / 100);
+            	const whhRate = Math.max(hundredWeightUnits * 9, 54);
+                charges.push({
+                    description: `Warehouse Handling (${lbs.toFixed(2)} lbs, ${hundredWeightUnits} CWT @ $9.00/CWT, min $54)`,
+                    amount: whhRate
+            	});
+        	}
+ 
+        	// Storage in Transit
+        	if (document.getElementById('sit').checked && lbs > 0) {
+            	const hundredWeightUnits = Math.ceil(lbs / 100);
+            	const sitRate = Math.max(hundredWeightUnits * 8, 48);
+                charges.push({
+                    description: `Storage in Transit (${lbs.toFixed(2)} lbs, ${hundredWeightUnits} CWT @ $8.00/CWT, min $48)`,
+                    amount: sitRate
+            	});
+        	}
+ 
+        	// Access Charge
+        	if (document.getElementById('accessCharge').checked && lbs > 0) {
+            	const hundredWeightUnits = Math.ceil(lbs / 100);
+            	const accessRate = Math.max(hundredWeightUnits * 5.50, 33);
+                charges.push({
+                    description: `Access Charge (${lbs.toFixed(2)} lbs, ${hundredWeightUnits} CWT @ $5.50/CWT, min $33)`,
+                    amount: accessRate
+            	});
+        	}
+ 
+        	// Stair Charge
+        	if (document.getElementById('stairCharge').checked && lbs > 0) {
+            	const hundredWeightUnits = Math.ceil(lbs / 100);
+            	const stairRate = Math.max(hundredWeightUnits * 5.50, 33);
+                charges.push({
+                    description: `Stair Carry Charge (${lbs.toFixed(2)} lbs, ${hundredWeightUnits} CWT @ $5.50/CWT, min $33)`,
+                    amount: stairRate
+            	});
+        	}
+ 
+        	// Parking Permit
+        	if (document.getElementById('parkingPermit').checked) {
+                charges.push({
+                    description: 'Parking Permit (Flat Rate)',
+                    amount: 375
+            	});
+        	}
+ 
+        	// Piano Handling
+        	const pianoType = document.getElementById('pianoType').value;
+        	if (pianoType === 'upright') {
+                charges.push({
+                    description: 'Upright Piano Handling',
+                    amount: 275
+            	});
+        	} else if (pianoType === 'grand') {
+                charges.push({
+                    description: 'Baby Grand Piano Handling',
+                    amount: 450
+            	});
+        	}
+ 
+        	// P&D Charges
+        	const shipmentType = document.getElementById('shipmentType').value;
+        	if (shipmentType) {
+            	const pdCharges = {
+                    'SEA': 750,
+                    'LCL': 370,
+                    'AIR': 300
+            	};
+                charges.push({
+                    description: `P&D Charge - ${shipmentType} Shipment`,
+                    amount: pdCharges[shipmentType]
+            	});
+        	}
+ 
+        	// Container Charges
+        	if (document.getElementById('cos').checked) {
+                charges.push({
+                    description: 'COS Carton',
+                    amount: 200
+            	});
+        	}
+        	if (document.getElementById('co7').checked) {
+                charges.push({
+                    description: 'CO7 Carton',
+                    amount: 250
+            	});
+        	}
+        	if (document.getElementById('co8').checked) {
+                charges.push({
+                    description: 'CO8 Carton',
+                    amount: 250
+            	});
+        	}
+        	if (document.getElementById('liftvan').checked) {
+                charges.push({
+                    description: 'Lift Van',
+                    amount: 450
+            	});
+        	}
+ 
+        	// Vehicle Charges
+        	if (document.getElementById('vehicle').checked) {
+                charges.push({
+                    description: 'Car Block and Brace',
+                    amount: 350
+            	});
+        	}
+        	if (document.getElementById('motorcycle').checked) {
+                charges.push({
+                    description: 'Motorcycle Block and Brace',
+                    amount: 250
+            	});
+        	}
+ 
+        	// Update Summary
+        	const lineItemsDiv = document.getElementById('lineItems');
+            lineItemsDiv.innerHTML = '';
+            charges.forEach(charge => {
+            	const div = document.createElement('div');
+                div.className = 'line-item';
+                div.innerHTML = `
+                    <span>${charge.description}</span>
+                    <span>$${charge.amount.toFixed(2)}</span>
+            	`;
+                lineItemsDiv.appendChild(div);
+        	});
+ 
+        	// Update Total
+        	const total = charges.reduce((sum, charge) => sum + charge.amount, 0);
+            document.getElementById('total').innerHTML = `
+                <div class="line-item">
+                    <span>Total</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+        	`;
+    	}
+ 
+    	// Add event listeners to all inputs
+        document.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('change', calculateCharges);
+            element.addEventListener('input', calculateCharges);
+    	});
+	</script>
+</body>
+</html>
+
+
