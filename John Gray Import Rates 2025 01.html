@@ -156,7 +156,6 @@
         }
 
         function getUnitRate(lbs) {
-            if (lbs <= 600) return 430 / (lbs || 600) * 100;
             if (lbs <= 999) return 37.56;
             if (lbs <= 3999) return 37.56;
             if (lbs <= 5999) return 34.15;
@@ -166,8 +165,9 @@
         }
 
         function getBaseRate(lbs) {
-            if (lbs <= 600) return 430;
-            return lbs * getUnitRate(lbs) / 100;
+            // Apply flat rate minimum of $430
+            const calculatedRate = lbs * getUnitRate(lbs) / 100;
+            return Math.max(430, calculatedRate);
         }
 
         function formatMoney(amount) {
@@ -244,12 +244,19 @@
             const details = document.getElementById('breakdownDetails');
             breakdown.classList.remove('hidden');
 
+            // Determine if we're showing the minimum rate
+            const isMinimumRate = calc.baseRate === 430 && calc.lbs * calc.unitRate / 100 < 430;
+            
             let html = `
                 <div class="cost-row">
                     <div>Base Rate:</div>
                     <div>
                         ${formatMoney(calc.baseRate)}
-                        <div class="rate-detail">${calc.unitRate.toFixed(2)}/100 lbs (${Math.round(calc.lbs)} lbs total)</div>
+                        <div class="rate-detail">
+                            ${isMinimumRate 
+                                ? 'Minimum flat rate $430 applied' 
+                                : `${calc.unitRate.toFixed(2)}/100 lbs (${Math.round(calc.lbs)} lbs total)`}
+                        </div>
                     </div>
                 </div>
             `;
