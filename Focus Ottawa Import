@@ -1,0 +1,367 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+const FocusMovingCalculator = () => {
+  // State variables
+  const [shipmentType, setShipmentType] = useState('fcl-20');
+  const [weight, setWeight] = useState(4000);
+  const [volume, setVolume] = useState(2);
+  const [totalCost, setTotalCost] = useState(0);
+  const [breakdown, setBreakdown] = useState([]);
+
+  // Rates from the tariff document
+  const rates = {
+    fcl: {
+      '20': {
+        minWeight: 4000,
+        serviceRate: 26.00,
+        haulage: 1950.00,
+        reman: 100.00,
+        bondFee: 75.00
+      },
+      '40': {
+        minWeight: 8000,
+        serviceRate: 24.00,
+        haulage: 2150.00,
+        reman: 100.00,
+        bondFee: 75.00
+      }
+    },
+    lcl: {
+      minVolume: 2,
+      baseRate: 295.00,
+      additionalCbmRate: 75.00,
+      reman: 100.00,
+      bondFee: 75.00,
+      serviceRates: [
+        { maxWeight: 3000, rate: 35.00 },
+        { maxWeight: 4000, rate: 33.00 },
+        { minWeight: 4001, rate: 0 } // Upon request
+      ]
+    },
+    air: {
+      montreal: {
+        minVolume: 2,
+        baseRate: 450.00,
+        additionalCbmRate: 75.00,
+        remans: 2,
+        remanRate: 100.00,
+        bondFee: 75.00
+      },
+      ottawa: {
+        minVolume: 2,
+        baseRate: 150.00,
+        additionalCbmRate: 25.00,
+        remans: 1,
+        remanRate: 100.00,
+        bondFee: 75.00
+      }
+    }
+  };
+
+  // Calculate total cost
+  useEffect(() => {
+    let cost = 0;
+    let costBreakdown = [];
+
+    if (shipmentType === 'fcl-20' || shipmentType === 'fcl-40') {
+      const containerSize = shipmentType.split('-')[1];
+      const containerRates = rates.fcl[containerSize];
+      
+      // Ensure minimum weight is met
+      const calculatedWeight = Math.max(weight, containerRates.minWeight);
+      
+      // Calculate destination service cost
+      const serviceCost = (calculatedWeight / 100) * containerRates.serviceRate;
+      costBreakdown.push({
+        description: `Destination Services - ${containerSize}' container FCL`,
+        detail: `${calculatedWeight} lbs @ CAD ${containerRates.serviceRate.toFixed(2)}/cwt`,
+        amount: serviceCost
+      });
+      
+      // Add haulage
+      costBreakdown.push({
+        description: `Road Haulage Montreal - Ottawa - Montreal (${containerSize}')`,
+        detail: `Fixed rate`,
+        amount: containerRates.haulage
+      });
+      
+      // Add reman fee
+      costBreakdown.push({
+        description: 'Reman fee',
+        detail: 'One reman included',
+        amount: containerRates.reman
+      });
+      
+      // Add bond fee
+      costBreakdown.push({
+        description: 'Customs Warehouse Bond fee',
+        detail: 'One entry',
+        amount: containerRates.bondFee
+      });
+      
+      cost = serviceCost + containerRates.haulage + containerRates.reman + containerRates.bondFee;
+    } 
+    else if (shipmentType === 'lcl') {
+      // Base freight for LCL
+      let lclCost = rates.lcl.baseRate;
+      let lclDescription = 'Inland Freight - LCL - Montreal - Ottawa';
+      
+      // Add additional volume charges if applicable
+      if (volume > rates.lcl.minVolume) {
+        const additionalCbm = volume - rates.lcl.minVolume;
+        const additionalCost = additionalCbm * rates.lcl.additionalCbmRate;
+        lclCost += additionalCost;
+        lclDescription += ` (${rates.lcl.minVolume} cbm base + ${additionalCbm} additional cbm)`;
+      }
+      
+      costBreakdown.push({
+        description: lclDescription,
+        detail: `Minimum up to ${rates.lcl.minVolume} cbm gross + additional cbm charges`,
+        amount: lclCost
+      });
+      
+      // Add destination service cost if applicable
+      if (weight > 0) {
+        let serviceRate = 0;
+        for (const rate of rates.lcl.serviceRates) {
+          if (rate.maxWeight && weight <= rate.maxWeight) {
+            serviceRate = rate.rate;
+            break;
+          } else if (rate.minWeight && weight >= rate.minWeight) {
+            serviceRate = rate.rate;
+            // This would actually be "upon request" but we'll use 0 for calculation
+            costBreakdown.push({
+              description: 'Destination service LCL',
+              detail: `Weight exceeds 4,000 lbs - rate upon request`,
+              amount: 0
+            });
+            break;
+          }
+        }
+        
+        if (serviceRate > 0) {
+          const serviceCost = (weight / 100) * serviceRate;
+          costBreakdown.push({
+            description: 'Destination service LCL',
+            detail: `${weight} lbs @ CAD ${serviceRate.toFixed(2)}/cwt`,
+            amount: serviceCost
+          });
+          cost += serviceCost;
+        }
+      }
+      
+      // Add reman fee
+      costBreakdown.push({
+        description: 'Reman fee',
+        detail: 'One reman included',
+        amount: rates.lcl.reman
+      });
+      
+      // Add bond fee
+      costBreakdown.push({
+        description: 'Customs Warehouse Bond fee',
+        detail: 'One entry',
+        amount: rates.lcl.bondFee
+      });
+      
+      cost += lclCost + rates.lcl.reman + rates.lcl.bondFee;
+    } 
+    else if (shipmentType === 'air-montreal' || shipmentType === 'air-ottawa') {
+      const airportOption = shipmentType.split('-')[1];
+      const airRates = rates.air[airportOption];
+      
+      // Base freight for Air
+      let airCost = airRates.baseRate;
+      let airDescription = `Inland Freight - AIR - ${airportOption === 'montreal' ? 'Montreal - Ottawa' : 'aoe Ottawa - Ottawa'}`;
+      
+      // Add additional volume charges if applicable
+      if (volume > airRates.minVolume) {
+        const additionalCbm = volume - airRates.minVolume;
+        const additionalCost = additionalCbm * airRates.additionalCbmRate;
+        airCost += additionalCost;
+        airDescription += ` (${airRates.minVolume} cbm base + ${additionalCbm} additional cbm)`;
+      }
+      
+      costBreakdown.push({
+        description: airDescription,
+        detail: `Minimum up to ${airRates.minVolume} cbm gross + additional cbm charges`,
+        amount: airCost
+      });
+      
+      // Add reman fees (Montreal has 2, Ottawa has 1)
+      const remanCost = airRates.remans * airRates.remanRate;
+      costBreakdown.push({
+        description: 'Reman fee',
+        detail: `${airRates.remans} reman${airRates.remans > 1 ? 's' : ''} @ CAD ${airRates.remanRate.toFixed(2)}`,
+        amount: remanCost
+      });
+      
+      // Add bond fee
+      costBreakdown.push({
+        description: 'Customs Warehouse Bond fee',
+        detail: 'One entry',
+        amount: airRates.bondFee
+      });
+      
+      cost += airCost + remanCost + airRates.bondFee;
+    }
+    
+    setTotalCost(cost);
+    setBreakdown(costBreakdown);
+  }, [shipmentType, weight, volume]);
+
+  return (
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader className="bg-blue-600 text-white">
+        <CardTitle className="text-2xl">Focus Moving Services Rate Calculator</CardTitle>
+        <CardDescription className="text-white opacity-90">Valid from April 01, 2024 - Ottawa Service Area (50KM Radius)</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Shipment Type</label>
+                <select
+                  value={shipmentType}
+                  onChange={(e) => setShipmentType(e.target.value)}
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="fcl-20">FCL - 20' Container</option>
+                  <option value="fcl-40">FCL - 40' Container</option>
+                  <option value="lcl">LCL (Less Container Load)</option>
+                  <option value="air-montreal">AIR - Montreal to Ottawa</option>
+                  <option value="air-ottawa">AIR - Ottawa Airport (aoe)</option>
+                </select>
+              </div>
+              
+              {(shipmentType === 'fcl-20' || shipmentType === 'fcl-40' || shipmentType === 'lcl') && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Weight (lbs)</label>
+                  <input
+                    type="number"
+                    value={weight}
+                    onChange={(e) => setWeight(Math.max(0, parseInt(e.target.value) || 0))}
+                    min="0"
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {shipmentType === 'fcl-20' && weight < 4000 && (
+                    <p className="text-amber-600 text-xs mt-1">Minimum weight is 4,000 lbs for 20' container</p>
+                  )}
+                  {shipmentType === 'fcl-40' && weight < 8000 && (
+                    <p className="text-amber-600 text-xs mt-1">Minimum weight is 8,000 lbs for 40' container</p>
+                  )}
+                  {shipmentType === 'lcl' && weight > 4000 && (
+                    <p className="text-amber-600 text-xs mt-1">Weight exceeds 4,000 lbs - rate upon request</p>
+                  )}
+                </div>
+              )}
+              
+              {(shipmentType === 'lcl' || shipmentType === 'air-montreal' || shipmentType === 'air-ottawa') && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Volume (cbm)</label>
+                  <input
+                    type="number"
+                    value={volume}
+                    onChange={(e) => setVolume(Math.max(0, parseFloat(e.target.value) || 0))}
+                    min="0"
+                    step="0.1"
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded">
+              <h3 className="font-semibold text-lg mb-2">Estimated Total</h3>
+              <div className="text-3xl font-bold text-blue-700">
+                CAD ${totalCost.toFixed(2)}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Taxes not included</p>
+              <div className="mt-4">
+                <p className="text-sm font-medium">Note:</p>
+                <ul className="text-xs list-disc pl-4 mt-1 text-gray-600">
+                  <li>MSC/ZIM containers may incur demurrage/detention charges</li>
+                  <li>FCL rates subject to 1 reman + 1 bond fee entry</li>
+                  <li>Free storage for 5 business days (storage charges apply from 6th day)</li>
+                  <li>Additional services not included (see exclusions)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold text-lg mb-2">Cost Breakdown</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="p-2 text-left">Service</th>
+                    <th className="p-2 text-left">Details</th>
+                    <th className="p-2 text-right">Amount (CAD)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {breakdown.map((item, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="p-2">{item.description}</td>
+                      <td className="p-2 text-gray-600">{item.detail}</td>
+                      <td className="p-2 text-right">${item.amount.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                  <tr className="font-semibold bg-gray-50">
+                    <td className="p-2">Total</td>
+                    <td className="p-2"></td>
+                    <td className="p-2 text-right">${totalCost.toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded text-sm">
+            <h3 className="font-semibold mb-2">Service Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-medium text-blue-700">Inclusions:</h4>
+                <ul className="list-disc pl-4 mt-1 text-gray-600 text-xs">
+                  <li>Container/shipment collection from terminal</li>
+                  <li>Customs clearance assistance</li>
+                  <li>Inside delivery to Ottawa residence</li>
+                  <li>Furniture placement as directed</li>
+                  <li>Inventory check off</li>
+                  <li>Unpacking onto flat surfaces</li>
+                  <li>Unwrapping furniture items</li>
+                  <li>Uncrating (up to 5 crates, 2-man handling)</li>
+                  <li>Simple assembly (≤8 pieces per item)</li>
+                  <li>Debris removal on delivery day</li>
+                  <li>Empty container return</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-blue-700">Exclusions:</h4>
+                <ul className="list-disc pl-4 mt-1 text-gray-600 text-xs">
+                  <li>Terminal handling charges</li>
+                  <li>Customs duties/taxes</li>
+                  <li>Customs examination/inspection</li>
+                  <li>Demurrage and detention charges</li>
+                  <li>Storage (free for 5 business days)</li>
+                  <li>Shuttle, hoisting, outside elevator</li>
+                  <li>Elevator use above 2nd floor</li>
+                  <li>Long/stair carry (above 2nd floor)</li>
+                  <li>Heavy/bulky item handling</li>
+                  <li>Parking permits, weekend service</li>
+                  <li>Extensive assembly (>8 pieces per item)</li>
+                  <li>Third party services</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default FocusMovingCalculator;
