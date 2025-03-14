@@ -7,261 +7,249 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            line-height: 1.6;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
         }
-        
-        h1 {
-            text-align: center;
-            color: #003366;
-        }
-        
         .container {
             background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
         }
-        
+        h1 {
+            color: #003366;
+            text-align: center;
+            margin-bottom: 30px;
+        }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
-        
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        
         select, input {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 5px;
             box-sizing: border-box;
         }
-        
-        .inline-radio {
-            display: inline-block;
-            margin-right: 15px;
-        }
-        
-        .inline-radio input {
-            width: auto;
-            margin-right: 5px;
-        }
-        
         button {
             background-color: #003366;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            padding: 12px 20px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
             display: block;
             margin: 20px auto;
+            width: 200px;
         }
-        
         button:hover {
-            background-color: #00254d;
+            background-color: #004b8f;
         }
-        
         #results {
             display: none;
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 30px;
             background-color: #f9f9f9;
-            border-left: 4px solid #003366;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 5px solid #003366;
         }
-        
         .result-item {
-            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
         }
-        
-        .result-item.total {
+        .total {
             font-weight: bold;
-            border-top: 1px solid #ddd;
-            padding-top: 10px;
-            margin-top: 10px;
+            font-size: 18px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #003366;
         }
-        
-        .warning {
-            color: #cc0000;
-            font-style: italic;
-            text-align: center;
+        .note {
             margin-top: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        #error {
+            color: red;
+            display: none;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Groupage Tariff Calculator</h1>
-        <h2>From Warehouse up to POE</h2>
-        
-        <div class="form-group">
-            <label for="origin">Origin:</label>
-            <select id="origin">
-                <option value="montreal">Warehouse Montreal/Ottawa</option>
-                <option value="pickering">Warehouse Pickering</option>
-            </select>
-        </div>
+        <h1>Groupage Tariff: Warehouse to POE</h1>
         
         <div class="form-group">
             <label for="destination">Destination:</label>
-            <select id="destination">
-                <option value="uk">UK</option>
-                <option value="europe">Europe</option>
+            <select id="destination" required>
+                <option value="">-- Select Destination --</option>
+                <option value="UK">UK</option>
+                <option value="Europe">Europe</option>
             </select>
         </div>
         
         <div class="form-group">
-            <label>Volume/Weight:</label>
-            <input type="number" id="volume-value" placeholder="Enter value" step="0.01" min="0">
-            <select id="volume-unit">
-                <option value="cuft">CUFT</option>
-                <option value="cbm">CBM</option>
-                <option value="lbs">LBS</option>
-                <option value="kg">KG</option>
+            <label for="origin">Origin:</label>
+            <select id="origin" required>
+                <option value="">-- Select Origin --</option>
+                <option value="Montreal/Ottawa">Warehouse Montreal/Ottawa</option>
+                <option value="Pickering">Warehouse Pickering</option>
             </select>
         </div>
         
-        <button onclick="calculateRates()">Calculate</button>
+        <div class="form-group">
+            <label for="measurementType">Volume/Weight Type:</label>
+            <select id="measurementType" required>
+                <option value="">-- Select Measurement Type --</option>
+                <option value="CUFT">Cubic Feet (CUFT)</option>
+                <option value="CBM">Cubic Meters (CBM)</option>
+                <option value="LBS">Pounds (LBS)</option>
+                <option value="KG">Kilograms (KG)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="measurement">Volume/Weight Value:</label>
+            <input type="number" id="measurement" min="0" step="0.01" required placeholder="Enter value">
+            <div id="error">Please enter a value greater than 0</div>
+        </div>
+        
+        <button onclick="calculateTariff()">Calculate Tariff</button>
         
         <div id="results">
-            <h3>Rate Calculation</h3>
-            <div id="results-detail"></div>
-            <div class="warning">Don't forget the delivery rate!</div>
+            <h2>Tariff Calculation</h2>
+            <div id="calculation-details"></div>
+            <div id="calculation-total" class="total"></div>
+            <div class="note">Don't forget to include the delivery rate, which is calculated separately based on the final destination.</div>
         </div>
     </div>
 
     <script>
-        function calculateRates() {
+        function calculateTariff() {
             // Get input values
-            const origin = document.getElementById("origin").value;
-            const destination = document.getElementById("destination").value;
-            const volumeValue = parseFloat(document.getElementById("volume-value").value);
-            const volumeUnit = document.getElementById("volume-unit").value;
+            const destination = document.getElementById('destination').value;
+            const origin = document.getElementById('origin').value;
+            const measurementType = document.getElementById('measurementType').value;
+            const measurementValue = parseFloat(document.getElementById('measurement').value);
             
-            // Check if volume value is entered
-            if (isNaN(volumeValue) || volumeValue <= 0) {
-                alert("Please enter a valid volume/weight value.");
+            // Validate inputs
+            if (!destination || !origin || !measurementType || isNaN(measurementValue) || measurementValue <= 0) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('results').style.display = 'none';
                 return;
+            } else {
+                document.getElementById('error').style.display = 'none';
             }
             
-            // Convert to CUFT for calculations
+            // Convert all measurements to CUFT for calculations
             let volumeInCUFT = 0;
             let volumeInCBM = 0;
             
-            switch(volumeUnit) {
-                case "cuft":
-                    volumeInCUFT = volumeValue;
-                    volumeInCBM = volumeValue / 35.315; // 1 CBM = 35.315 CUFT
+            switch(measurementType) {
+                case 'CUFT':
+                    volumeInCUFT = measurementValue;
+                    volumeInCBM = measurementValue / 35.315; // Convert CUFT to CBM
                     break;
-                case "cbm":
-                    volumeInCBM = volumeValue;
-                    volumeInCUFT = volumeValue * 35.315;
+                case 'CBM':
+                    volumeInCBM = measurementValue;
+                    volumeInCUFT = measurementValue * 35.315; // Convert CBM to CUFT
                     break;
-                case "lbs":
-                    volumeInCUFT = volumeValue / 7; // 7 LBS per CUFT
+                case 'LBS':
+                    volumeInCUFT = measurementValue / 7; // Using density of 7LBS per CUFT
                     volumeInCBM = volumeInCUFT / 35.315;
                     break;
-                case "kg":
-                    volumeInCUFT = (volumeValue * 2.20462) / 7; // Convert KG to LBS, then use density
+                case 'KG':
+                    const lbs = measurementValue * 2.20462; // Convert KG to LBS
+                    volumeInCUFT = lbs / 7; // Using density of 7LBS per CUFT
                     volumeInCBM = volumeInCUFT / 35.315;
                     break;
             }
             
-            // Calculate costs
-            let truckingCost = 0;
-            let warehouseCost = 0;
-            let adminCost = 150;
-            let oceanFreightCost = 0;
-            let totalCost = 0;
+            // Initialize calculation details
+            const details = [];
+            let totalCharge = 0;
             
-            // Calculate trucking costs (if applicable)
-            if (origin === "montreal") {
-                truckingCost = volumeInCBM * (200 / 2);
-            if (truckingCost < 200) {
-                truckingCost = 200; // Minimum flat rate
+            // Calculate charges
+            
+            // 1. Trucking to warehouse Pickering (if origin is Montreal/Ottawa)
+            if (origin === 'Montreal/Ottawa') {
+                const truckingRate = Math.max(200, volumeInCBM * 200 / 2);
+                details.push({
+                    description: 'Trucking from Montreal/Ottawa to Pickering',
+                    calculation: `$200 per 2 CBM × ${volumeInCBM.toFixed(2)} CBM (Min. $200)`,
+                    amount: truckingRate
+                });
+                totalCharge += truckingRate;
             }
             
-            // Calculate warehouse handling costs
-            warehouseCost = volumeInCUFT * 0.75;
-            if (warehouseCost < 150) {
-                warehouseCost = 150; // Minimum flat rate
-            }
+            // 2. Warehouse handling Pickering
+            const warehouseHandling = Math.max(150, volumeInCUFT * 0.75);
+            details.push({
+                description: 'Warehouse Handling Pickering',
+                calculation: `$0.75 per CUFT × ${volumeInCUFT.toFixed(2)} CUFT (Min. $150)`,
+                amount: warehouseHandling
+            });
+            totalCharge += warehouseHandling;
             
-            // Calculate ocean freight costs
-            let minOceanFreightVolume = 100; // Minimum 100 CUFT
-            let oceanFreightVolume = Math.max(volumeInCUFT, minOceanFreightVolume);
+            // 3. Admin fee
+            const adminFee = 150;
+            details.push({
+                description: 'Admin Fee',
+                calculation: 'Flat Rate',
+                amount: adminFee
+            });
+            totalCharge += adminFee;
             
-            if (destination === "uk") {
-                oceanFreightCost = oceanFreightVolume * 4.00;
-            } else { // Europe
-                oceanFreightCost = oceanFreightVolume * 4.50;
-            }
+            // 4. Ocean freight
+            let oceanFreightRate = destination === 'UK' ? 4.00 : 4.50;
+            let oceanFreightVolume = Math.max(100, volumeInCUFT);
+            let oceanFreight = oceanFreightVolume * oceanFreightRate;
             
-            // Calculate total
-            totalCost = truckingCost + warehouseCost + adminCost + oceanFreightCost;
+            details.push({
+                description: 'Ocean Freight to ' + destination,
+                calculation: `$${oceanFreightRate.toFixed(2)} per CUFT × ${oceanFreightVolume.toFixed(2)} CUFT (Min. 100 CUFT)`,
+                amount: oceanFreight
+            });
+            totalCharge += oceanFreight;
             
             // Display results
-            const resultsDetail = document.getElementById("results-detail");
-            resultsDetail.innerHTML = "";
+            const detailsContainer = document.getElementById('calculation-details');
+            detailsContainer.innerHTML = '';
             
-            // Build results HTML
-            let resultHTML = "";
+            details.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>${item.description}</strong><br>
+                        <small>${item.calculation}</small>
+                    </div>
+                    <div>$${item.amount.toFixed(2)}</div>
+                `;
+                detailsContainer.appendChild(div);
+            });
             
-            // Original entered value display
-            resultHTML += `<div class="result-item">
-                <span>Entered Value:</span>
-                <span>${volumeValue.toFixed(2)} ${volumeUnit.toUpperCase()}</span>
-            </div>`;
+            document.getElementById('calculation-total').innerHTML = `
+                <div class="result-item">
+                    <div>TOTAL CHARGE</div>
+                    <div>$${totalCharge.toFixed(2)}</div>
+                </div>
+            `;
             
-            // Show conversion
-            resultHTML += `<div class="result-item">
-                <span>Converted to:</span>
-                <span>${volumeInCUFT.toFixed(2)} CUFT / ${volumeInCBM.toFixed(2)} CBM</span>
-            </div>`;
-            
-            // Individual charges
-            if (origin === "montreal") {
-                resultHTML += `<div class="result-item">
-                    <span>Trucking to Warehouse Pickering:</span>
-                    <span>$${truckingCost.toFixed(2)} (${volumeInCBM.toFixed(2)} CBM × $200/2 CBM, min $200)</span>
-                </div>`;
-            }
-            
-            resultHTML += `<div class="result-item">
-                <span>Warehouse Handling Pickering:</span>
-                <span>$${warehouseCost.toFixed(2)} (${volumeInCUFT.toFixed(2)} CUFT × $0.75/CUFT, min $150)</span>
-            </div>`;
-            
-            resultHTML += `<div class="result-item">
-                <span>Admin Fee:</span>
-                <span>$${adminCost.toFixed(2)} (Flat rate)</span>
-            </div>`;
-            
-            resultHTML += `<div class="result-item">
-                <span>Ocean Freight (${destination.toUpperCase()}):</span>
-                <span>$${oceanFreightCost.toFixed(2)} (${oceanFreightVolume.toFixed(2)} CUFT × $${destination === "uk" ? "4.00" : "4.50"}/CUFT, min 100 CUFT)</span>
-            </div>`;
-            
-            // Total
-            resultHTML += `<div class="result-item total">
-                <span>Total Charges:</span>
-                <span>$${totalCost.toFixed(2)}</span>
-            </div>`;
-            
-            resultsDetail.innerHTML = resultHTML;
-            document.getElementById("results").style.display = "block";
+            document.getElementById('results').style.display = 'block';
         }
     </script>
 </body>
 </html>
-
