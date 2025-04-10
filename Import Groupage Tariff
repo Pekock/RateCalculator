@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Import Groupage Rate Calculator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9f9f9;
+      padding: 40px;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #005b96;
+    }
+    label {
+      margin-top: 10px;
+      display: block;
+      font-weight: 600;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #006400;
+    }
+    .note {
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Import Groupage Rate Calculator</h1>
+    <label for="location">Select Destination:</label>
+    <select id="location">
+      <option value="Handout">Handout (at warehouse Toronto)</option>
+      <option value="Local Toronto">Local Toronto (from Toronto city centre)</option>
+      <option value="51-100 km">51-100 km (from Toronto city centre)</option>
+      <option value="101-150 km">101-150 km (from Toronto city centre)</option>
+      <option value="151-200 km">151-200 km (from Toronto city centre)</option>
+      <option value="201-250 km">201-250 km (from Toronto city centre)</option>
+      <option value="251-300 km">251-300 km (from Toronto city centre)</option>
+      <option value="301-350 km">301-350 km (from Toronto city centre)</option>
+      <option value="351-400 km">351-400 km (from Toronto city centre)</option>
+      <option value="Ottawa">Ottawa</option>
+      <option value="Montreal">Montreal</option>
+      <option value="Quebec City">Quebec City</option>
+      <option value="Winnipeg">Winnipeg</option>
+      <option value="Halifax">Halifax</option>
+      <option value="Fredericton">Fredericton</option>
+      <option value="Saint John">Saint John</option>
+      <option value="Charlottetown">Charlottetown</option>
+      <option value="St John's">St John's</option>
+    </select>
+
+    <label for="unit">Enter Shipment Size:</label>
+    <input type="number" id="size" placeholder="Enter value" />
+    <select id="unit">
+      <option value="cuft">Cubic Feet</option>
+      <option value="cbm">Cubic Meters</option>
+      <option value="lbs">Pounds</option>
+      <option value="kg">Kilograms</option>
+    </select>
+
+    <button onclick="calculateRate()">Calculate</button>
+
+    <div id="result"></div>
+    <div class="note">
+      Containers to be sent via POE Toronto. Costing point for mileage calculations is “Toronto”.<br />
+      Min volume 850 cubic feet. If not, a surcharge of 400.00 will be applied to the container.<br />
+      Any destinations not listed or any questions should be sent to rates@focusmoving.com
+    </div>
+  </div>
+
+  <script>
+    const rates = {
+      "Handout": [250, 275, 300, 3.50, 3.40, 3.30, 3.20, 3.10, 3.00],
+      "Local Toronto": [275, 300, 325, 3.75, 3.65, 3.55, 3.45, 3.35, 3.25],
+      "51-100 km": [325, 350, 375, 4.00, 3.90, 3.80, 3.70, 3.60, 3.50],
+      "101-150 km": [375, 400, 425, 4.50, 4.40, 4.30, 4.20, 4.10, 4.00],
+      "151-200 km": [425, 450, 475, 5.00, 4.90, 4.80, 4.70, 4.60, 4.50],
+      "201-250 km": [475, 500, 525, 5.50, 5.40, 5.30, 5.20, 5.10, 5.00],
+      "251-300 km": [525, 550, 575, 6.50, 6.40, 6.30, 6.20, 6.10, 6.00],
+      "301-350 km": [575, 600, 625, 7.50, 7.40, 7.30, 7.20, 7.10, 7.00],
+      "351-400 km": [625, 650, 675, 8.50, 8.40, 8.30, 8.20, 8.10, 8.00],
+      "Ottawa": [650, 700, 750, 8.00, 7.90, 7.80, 7.70, 7.60, 7.50],
+      "Montreal": [725, 750, 775, 8.50, 8.40, 8.30, 8.20, 8.10, 8.00],
+      "Quebec City": [900, 950, 975, 12.00, 11.90, 11.80, 11.70, 11.60, 11.50],
+      "Winnipeg": [800, 850, 900, 9.50, 9.40, 9.30, 9.20, 9.10, 9.00],
+      "Halifax": [950, 975, 995, 11.50, 11.40, 11.30, 11.20, 11.10, 11.00],
+      "Fredericton": [950, 975, 995, 12.00, 11.90, 11.80, 11.70, 11.60, 11.50],
+      "Saint John": [950, 975, 995, 12.00, 11.90, 11.80, 11.70, 11.60, 11.50],
+      "Charlottetown": [975, 985, 995, 13.00, 12.90, 12.80, 12.70, 12.60, 12.50],
+      "St John's": [975, 985, 995, 13.00, 12.90, 12.80, 12.70, 12.60, 12.50],
+    };
+
+    function toCuft(value, unit) {
+      switch(unit) {
+        case 'cbm': return value * 35.3147;
+        case 'lbs': return value / 7;
+        case 'kg': return (value * 2.20462) / 7;
+        default: return value;
+      }
+    }
+
+    function calculateRate() {
+      const location = document.getElementById('location').value;
+      const unit = document.getElementById('unit').value;
+      const sizeInput = parseFloat(document.getElementById('size').value);
+
+      if (isNaN(sizeInput) || sizeInput <= 0) {
+        document.getElementById('result').innerText = 'Please enter a valid shipment size.';
+        return;
+      }
+
+      const cuft = toCuft(sizeInput, unit);
+      const tiers = [25, 50, 75, 200, 300, 400, 500, 600, 700];
+      let rate = 0;
+      let unitRate = null;
+      let cost = 0;
+
+      if (cuft <= 25) {
+        cost = rates[location][0];
+      } else if (cuft <= 50) {
+        cost = rates[location][1];
+      } else if (cuft <= 75) {
+        cost = rates[location][2];
+      } else {
+        let index = 8; // Default to max tier if over 700 cuft
+        for (let i = 3; i < tiers.length; i++) {
+          if (cuft <= tiers[i]) {
+            index = i;
+            break;
+          }
+        }
+        unitRate = rates[location][index];
+        cost = unitRate * cuft;
+      }
+
+      let resultText = `Total Cost: $${cost.toFixed(2)}`;
+      if (unitRate !== null) {
+        resultText += `\nUnit Rate: $${unitRate.toFixed(2)} per cuft`;
+      }
+      document.getElementById('result').innerText = resultText;
+    }
+  </script>
+</body>
+</html>
