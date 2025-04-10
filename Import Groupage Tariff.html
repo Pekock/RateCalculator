@@ -51,6 +51,7 @@
       font-size: 18px;
       font-weight: bold;
       color: #006400;
+      white-space: pre-line;
     }
     .note {
       font-size: 12px;
@@ -75,13 +76,13 @@
       <option value="351-400 km">351-400 km (from Toronto city centre)</option>
       <option value="Ottawa">Ottawa</option>
       <option value="Montreal">Montreal</option>
-      <option value="Quebec City">Quebec City</option>
-      <option value="Winnipeg">Winnipeg</option>
+      <option value="St. John, Fredericton NB">St. John, Fredericton NB</option>
       <option value="Halifax">Halifax</option>
-      <option value="Fredericton">Fredericton</option>
-      <option value="Saint John">Saint John</option>
-      <option value="Charlottetown">Charlottetown</option>
-      <option value="St John's">St John's</option>
+      <option value="Winnipeg">Winnipeg</option>
+      <option value="Saskatoon, Regina SK">Saskatoon, Regina SK</option>
+      <option value="Calgary">Calgary</option>
+      <option value="Edmonton">Edmonton</option>
+      <option value="Vancouver">Vancouver</option>
     </select>
 
     <label for="unit">Enter Shipment Size:</label>
@@ -97,32 +98,39 @@
 
     <div id="result"></div>
     <div class="note">
-      Containers to be sent via POE Toronto. Costing point for mileage calculations is “Toronto”.<br />
-      Min volume 850 cubic feet. If not, a surcharge of 400.00 will be applied to the container.<br />
+      Containers to be sent via POE Toronto. Costing point for mileage calculations &lt; 400 km is “Toronto”.<br />
+      Min volume 850 cubic feet via 20‘ / 1800 cft via 40‘. If not, a surcharge of 400.00 cad will be applied to the container.<br />
+      Consingee must report to Customs in Toronto for shipments within 299 KMS of Toronto<br />
+      Shipments 300 km + of Toronto: subject to: + 250.00 for customs related fees<br />
       Any destinations not listed or any questions should be sent to rates@focusmoving.com
     </div>
   </div>
 
   <script>
+    const customsBondLocations = [
+      "Ottawa", "Montreal", "St. John, Fredericton NB", "Halifax",
+      "Winnipeg", "Saskatoon, Regina SK", "Calgary", "Edmonton", "Vancouver"
+    ];
+
     const rates = {
-      "Handout": [250, 275, 300, 3.50, 3.40, 3.30, 3.20, 3.10, 3.00],
-      "Local Toronto": [275, 300, 325, 3.75, 3.65, 3.55, 3.45, 3.35, 3.25],
-      "51-100 km": [325, 350, 375, 4.00, 3.90, 3.80, 3.70, 3.60, 3.50],
+      "Handout": [275, 300, 325, 3.50, 3.40, 3.30, 3.20, 3.10, 3.00],
+      "Local Toronto": [300, 325, 350, 3.75, 3.65, 3.55, 3.45, 3.35, 3.25],
+      "51-100 km": [350, 375, 400, 4.00, 3.90, 3.80, 3.70, 3.60, 3.50],
       "101-150 km": [375, 400, 425, 4.50, 4.40, 4.30, 4.20, 4.10, 4.00],
       "151-200 km": [425, 450, 475, 5.00, 4.90, 4.80, 4.70, 4.60, 4.50],
       "201-250 km": [475, 500, 525, 5.50, 5.40, 5.30, 5.20, 5.10, 5.00],
       "251-300 km": [525, 550, 575, 6.50, 6.40, 6.30, 6.20, 6.10, 6.00],
       "301-350 km": [575, 600, 625, 7.50, 7.40, 7.30, 7.20, 7.10, 7.00],
       "351-400 km": [625, 650, 675, 8.50, 8.40, 8.30, 8.20, 8.10, 8.00],
-      "Ottawa": [650, 700, 750, 8.00, 7.90, 7.80, 7.70, 7.60, 7.50],
-      "Montreal": [725, 750, 775, 8.50, 8.40, 8.30, 8.20, 8.10, 8.00],
-      "Quebec City": [900, 950, 975, 12.00, 11.90, 11.80, 11.70, 11.60, 11.50],
-      "Winnipeg": [800, 850, 900, 9.50, 9.40, 9.30, 9.20, 9.10, 9.00],
-      "Halifax": [950, 975, 995, 11.50, 11.40, 11.30, 11.20, 11.10, 11.00],
-      "Fredericton": [950, 975, 995, 12.00, 11.90, 11.80, 11.70, 11.60, 11.50],
-      "Saint John": [950, 975, 995, 12.00, 11.90, 11.80, 11.70, 11.60, 11.50],
-      "Charlottetown": [975, 985, 995, 13.00, 12.90, 12.80, 12.70, 12.60, 12.50],
-      "St John's": [975, 985, 995, 13.00, 12.90, 12.80, 12.70, 12.60, 12.50],
+      "Ottawa": [700, 750, 800, 8.00, 7.90, 7.80, 7.70, 7.60, 7.50],
+      "Montreal": [750, 800, 850, 8.50, 8.40, 8.30, 8.20, 8.10, 8.00],
+      "St. John, Fredericton NB": [900, 950, 975, 12.00, 11.90, 11.80, 11.70, 11.60, 11.50],
+      "Halifax": [900, 950, 975, 11.50, 11.40, 11.30, 11.20, 11.10, 11.00],
+      "Winnipeg": [850, 900, 950, 10.45, 10.35, 10.25, 10.15, 10.10, 10.00],
+      "Saskatoon, Regina SK": [750, 850, 950, 13.25, 13.05, 12.85, 12.65, 12.45, 12.25],
+      "Calgary": [750, 850, 950, 13.65, 13.40, 13.20, 13.00, 12.80, 12.60],
+      "Edmonton": [750, 850, 950, 13.65, 13.40, 13.20, 13.00, 12.80, 12.60],
+      "Vancouver": [800, 900, 1000, 13.50, 13.15, 12.55, 12.45, 12.35, 12.25],
     };
 
     function toCuft(value, unit) {
@@ -149,6 +157,7 @@
       let rate = 0;
       let unitRate = null;
       let cost = 0;
+      let bondFee = 0;
 
       if (cuft <= 25) {
         cost = rates[location][0];
@@ -168,10 +177,19 @@
         cost = unitRate * cuft;
       }
 
-      let resultText = `Total Cost: $${cost.toFixed(2)}`;
-      if (unitRate !== null) {
-        resultText += `\nUnit Rate: $${unitRate.toFixed(2)} per cuft`;
+      if (customsBondLocations.includes(location)) {
+        bondFee = 250;
+        cost += bondFee;
       }
+
+      let resultText = `Total Cost: C$${cost.toFixed(2)}`;
+      if (unitRate !== null) {
+        resultText += `\nUnit Rate: C$${unitRate.toFixed(2)} per cuft`;
+      }
+      if (bondFee > 0) {
+        resultText += `\nCustoms Bond Fee: C$${bondFee.toFixed(2)}`;
+      }
+
       document.getElementById('result').innerText = resultText;
     }
   </script>
