@@ -182,13 +182,14 @@
         cost += bondFee;
       }
 
-      let resultText = `Total Cost: C$${cost.toFixed(2)}`;
+      let resultText = `Volume: ${cuft.toFixed(2)} cuft`;
       if (unitRate !== null) {
         resultText += `\nUnit Rate: C$${unitRate.toFixed(2)} per cuft`;
       }
       if (bondFee > 0) {
         resultText += `\nCustoms Bond Fee: C$${bondFee.toFixed(2)}`;
       }
+      resultText += `\nTotal Cost: C$${cost.toFixed(2)}`;
 
       document.getElementById('result').innerText = resultText;
     }
