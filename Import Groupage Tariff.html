@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Import Groupage Rate Calculator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -94,12 +95,19 @@
       <option value="kg">Kilograms</option>
     </select>
 
+    <label for="clientName">Client Name:</label>
+    <input type="text" id="clientName" placeholder="Enter client name" />
+
+    <label for="address">Client Address:</label>
+    <input type="text" id="address" placeholder="Enter client address" />
+
     <button onclick="calculateRate()">Calculate</button>
+    <button onclick="downloadPDF()">Export to PDF</button>
 
     <div id="result"></div>
     <div class="note">
-      Containers to be sent via POE Toronto. Costing point for mileage calculations &lt; 400 km is “Toronto”.<br />
-      Min volume 850 cubic feet via 20‘ / 1800 cft via 40‘. If not, a surcharge of 400.00 cad will be applied to the container.<br />
+      Containers to be sent via POE Toronto. Costing point for mileage calculations is "Toronto".<br />
+      Min volume 850 cubic feet via 20' / 1800 cft via 40'. If not, a surcharge of 400.00 cad will be applied to the container.<br />
       Consingee must report to Customs in Toronto for shipments within 299 KMS of Toronto<br />
       Shipments 300 km + of Toronto: subject to: + 250.00 for customs related fees<br />
       Any destinations not listed or any questions should be sent to rates@focusmoving.com
@@ -107,31 +115,39 @@
   </div>
 
   <script>
-    const customsBondLocations = [
-      "Ottawa", "Montreal", "St. John, Fredericton NB", "Halifax",
-      "Winnipeg", "Saskatoon, Regina SK", "Calgary", "Edmonton", "Vancouver"
-    ];
-
+    const customsBondLocations = ["Ottawa", "Montreal", "St. John, Fredericton NB", "Halifax", "Winnipeg", "Saskatoon, Regina SK", "Calgary", "Edmonton", "Vancouver"];
     const rates = {
-      "Handout": [275, 300, 325, 3.50, 3.40, 3.30, 3.20, 3.10, 3.00],
-      "Local Toronto": [300, 325, 350, 3.75, 3.65, 3.55, 3.45, 3.35, 3.25],
-      "51-100 km": [350, 375, 400, 4.00, 3.90, 3.80, 3.70, 3.60, 3.50],
-      "101-150 km": [375, 400, 425, 4.50, 4.40, 4.30, 4.20, 4.10, 4.00],
-      "151-200 km": [425, 450, 475, 5.00, 4.90, 4.80, 4.70, 4.60, 4.50],
-      "201-250 km": [475, 500, 525, 5.50, 5.40, 5.30, 5.20, 5.10, 5.00],
-      "251-300 km": [525, 550, 575, 6.50, 6.40, 6.30, 6.20, 6.10, 6.00],
-      "301-350 km": [575, 600, 625, 7.50, 7.40, 7.30, 7.20, 7.10, 7.00],
-      "351-400 km": [625, 650, 675, 8.50, 8.40, 8.30, 8.20, 8.10, 8.00],
-      "Ottawa": [700, 750, 800, 8.00, 7.90, 7.80, 7.70, 7.60, 7.50],
-      "Montreal": [750, 800, 850, 8.50, 8.40, 8.30, 8.20, 8.10, 8.00],
-      "St. John, Fredericton NB": [900, 950, 975, 12.00, 11.90, 11.80, 11.70, 11.60, 11.50],
-      "Halifax": [900, 950, 975, 11.50, 11.40, 11.30, 11.20, 11.10, 11.00],
-      "Winnipeg": [850, 900, 950, 10.45, 10.35, 10.25, 10.15, 10.10, 10.00],
-      "Saskatoon, Regina SK": [750, 850, 950, 13.25, 13.05, 12.85, 12.65, 12.45, 12.25],
-      "Calgary": [750, 850, 950, 13.65, 13.40, 13.20, 13.00, 12.80, 12.60],
-      "Edmonton": [750, 850, 950, 13.65, 13.40, 13.20, 13.00, 12.80, 12.60],
-      "Vancouver": [800, 900, 1000, 13.50, 13.15, 12.55, 12.45, 12.35, 12.25],
+      "Handout": [275,300,325,3.5,3.4,3.3,3.2,3.1,3.0],
+      "Local Toronto": [300,325,350,3.75,3.65,3.55,3.45,3.35,3.25],
+      "51-100 km": [350,375,400,4.0,3.9,3.8,3.7,3.6,3.5],
+      "101-150 km": [375,400,425,4.5,4.4,4.3,4.2,4.1,4.0],
+      "151-200 km": [425,450,475,5.0,4.9,4.8,4.7,4.6,4.5],
+      "201-250 km": [475,500,525,5.5,5.4,5.3,5.2,5.1,5.0],
+      "251-300 km": [525,550,575,6.5,6.4,6.3,6.2,6.1,6.0],
+      "301-350 km": [575,600,625,7.5,7.4,7.3,7.2,7.1,7.0],
+      "351-400 km": [625,650,675,8.5,8.4,8.3,8.2,8.1,8.0],
+      "Ottawa": [700,750,800,8.0,7.9,7.8,7.7,7.6,7.5],
+      "Montreal": [750,800,850,8.5,8.4,8.3,8.2,8.1,8.0],
+      "St. John, Fredericton NB": [900,950,975,12.0,11.9,11.8,11.7,11.6,11.5],
+      "Halifax": [900,950,975,11.5,11.4,11.3,11.2,11.1,11.0],
+      "Winnipeg": [850,900,950,10.45,10.35,10.25,10.15,10.10,10.0],
+      "Saskatoon, Regina SK": [750,850,950,13.25,13.05,12.85,12.65,12.45,12.25],
+      "Calgary": [750,850,950,13.65,13.4,13.2,13.0,12.8,12.6],
+      "Edmonton": [750,850,950,13.65,13.4,13.2,13.0,12.8,12.6],
+      "Vancouver": [800,900,1000,13.5,13.15,12.55,12.45,12.35,12.25]
     };
+
+    let latestResult = '';
+    let calculationDetails = {};
+
+    function generateReferenceNumber() {
+      const today = new Date();
+      const year = today.getFullYear().toString().substr(-2);
+      const month = (today.getMonth() + 1).toString().padStart(2, '0');
+      const day = today.getDate().toString().padStart(2, '0');
+      const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      return `FMS-${year}${month}${day}-${random}`;
+    }
 
     function toCuft(value, unit) {
       switch(unit) {
@@ -146,52 +162,150 @@
       const location = document.getElementById('location').value;
       const unit = document.getElementById('unit').value;
       const sizeInput = parseFloat(document.getElementById('size').value);
-
       if (isNaN(sizeInput) || sizeInput <= 0) {
         document.getElementById('result').innerText = 'Please enter a valid shipment size.';
         return;
       }
-
       const cuft = toCuft(sizeInput, unit);
       const tiers = [25, 50, 75, 200, 300, 400, 500, 600, 700];
-      let rate = 0;
-      let unitRate = null;
-      let cost = 0;
-      let bondFee = 0;
-
-      if (cuft <= 25) {
-        cost = rates[location][0];
-      } else if (cuft <= 50) {
-        cost = rates[location][1];
-      } else if (cuft <= 75) {
-        cost = rates[location][2];
-      } else {
-        let index = 8; // Default to max tier if over 700 cuft
+      let unitRate = null, bondFee = 0, cost = 0;
+      const locationRates = rates[location];
+      if (!locationRates || locationRates.length < 9) {
+        document.getElementById('result').innerText = 'Rates for the selected location are not properly defined.';
+        return;
+      }
+      if (cuft <= 25) cost = locationRates[0];
+      else if (cuft <= 50) cost = locationRates[1];
+      else if (cuft <= 75) cost = locationRates[2];
+      else {
+        let index = 8;
         for (let i = 3; i < tiers.length; i++) {
-          if (cuft <= tiers[i]) {
-            index = i;
-            break;
-          }
+          if (cuft <= tiers[i]) { index = i; break; }
         }
-        unitRate = rates[location][index];
+        unitRate = locationRates[index];
         cost = unitRate * cuft;
       }
-
       if (customsBondLocations.includes(location)) {
         bondFee = 250;
         cost += bondFee;
       }
 
-      let resultText = `Volume: ${cuft.toFixed(2)} cuft`;
-      if (unitRate !== null) {
-        resultText += `\nUnit Rate: C$${unitRate.toFixed(2)} per cuft`;
-      }
-      if (bondFee > 0) {
-        resultText += `\nCustoms Bond Fee: C$${bondFee.toFixed(2)}`;
-      }
-      resultText += `\nTotal Cost: C$${cost.toFixed(2)}`;
+      calculationDetails = {
+        location: location,
+        cuft: cuft.toFixed(2),
+        unitRate: unitRate !== null ? unitRate.toFixed(2) : null,
+        bondFee: bondFee,
+        totalCost: cost.toFixed(2),
+        referenceNumber: generateReferenceNumber(),
+        date: new Date().toLocaleDateString()
+      };
 
-      document.getElementById('result').innerText = resultText;
+      latestResult = "Volume: " + cuft.toFixed(2) + " cuft";
+      if (unitRate !== null) latestResult += "\nUnit Rate: C$" + unitRate.toFixed(2) + " per cuft";
+      if (bondFee > 0) latestResult += "\nCustoms Bond Fee: C$" + bondFee.toFixed(2);
+      latestResult += "\nTotal Cost: C$" + cost.toFixed(2);
+      latestResult += "\nQuote Reference: " + calculationDetails.referenceNumber;
+      document.getElementById('result').innerText = latestResult;
+    }
+
+    function downloadPDF() {
+      if (!latestResult) {
+        alert("Please calculate the rate first.");
+        return;
+      }
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const clientName = document.getElementById('clientName').value || "Client";
+        const clientAddress = document.getElementById('address').value || "Address not provided";
+        
+        // Add letterhead
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("Focus Moving Services Inc.", 105, 20, { align: "center" });
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        // Left address block
+        doc.text("1-850 Brock Rd", 20, 30);
+        doc.text("Pickering, ON", 20, 35);
+        doc.text("L1W 1Z8", 20, 40);
+        doc.text("Canada", 20, 45);
+        doc.text("Tel: +1-905-426-4299", 20, 50);
+        doc.text("info@focusmoving.com", 20, 55);
+        
+        // Right address block
+        doc.text("M-1179 Newmarket Street", 140, 30);
+        doc.text("Ottawa, ON", 140, 35);
+        doc.text("K1B 3B1", 140, 40);
+        doc.text("Canada", 140, 45);
+        doc.text("Tel: +1-613-216-1918", 140, 50);
+        doc.text("info@focusmoving.com", 140, 55);
+        
+        // Horizontal line
+        doc.setLineWidth(0.5);
+        doc.line(20, 60, 190, 60);
+        
+        // Document title and reference
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("IMPORT GROUPAGE RATE QUOTATION", 105, 75, { align: "center" });
+        
+        doc.setFontSize(11);
+        doc.text(`Reference: ${calculationDetails.referenceNumber}`, 105, 85, { align: "center" });
+        doc.text(`Date: ${calculationDetails.date}`, 105, 92, { align: "center" });
+        
+        // Client information
+        doc.setFont("helvetica", "normal");
+        doc.text(`Client: ${clientName}`, 105, 105, { align: "center" });
+        doc.text(`Address: ${clientAddress}`, 105, 112, { align: "center" });
+        
+        // Quotation details
+        doc.setFontSize(12);
+        doc.text(`Destination: ${calculationDetails.location}`, 105, 125, { align: "center" });
+        doc.text(`Volume: ${calculationDetails.cuft} cubic feet`, 105, 135, { align: "center" });
+        
+        if (calculationDetails.unitRate !== null) {
+          doc.text(`Unit Rate: C$${calculationDetails.unitRate} per cubic foot`, 105, 145, { align: "center" });
+        }
+        
+        if (calculationDetails.bondFee > 0) {
+          doc.text(`Customs Bond Fee: C$${calculationDetails.bondFee.toFixed(2)}`, 105, 155, { align: "center" });
+        }
+        
+        // Total with emphasis
+        doc.setFont("helvetica", "bold");
+        doc.text(`TOTAL COST: C$${calculationDetails.totalCost}`, 105, 170, { align: "center" });
+        
+        // Terms and conditions
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        const terms = [
+          "Terms and Conditions:",
+          "• Containers to be sent via POE Toronto. Costing point for mileage calculations is Toronto.",
+          "• Min volume 850 cubic feet via 20' / 1800 cft via 40'. If not, a surcharge of 400.00 CAD will be applied.",
+          "• Consignee must report to Customs in Toronto for shipments within 299 KMS of Toronto.",
+          "• Shipments 300 km+ of Toronto: subject to + 250.00 for customs related fees.",
+          "• Quote valid for 30 days from issue date.",
+          "• For questions or additional destinations, contact rates@focusmoving.com"
+        ];
+        
+        let yPos = 200;
+        terms.forEach(line => {
+          doc.text(line, 20, yPos);
+          yPos += 6;
+        });
+        
+        // Footer with page number
+        doc.setFontSize(8);
+        doc.text(`Page 1 of 1`, 105, 280, { align: "center" });
+        
+        // Save the PDF
+        doc.save(`${calculationDetails.referenceNumber}-rate-quote.pdf`);
+      } catch (e) {
+        alert("PDF export failed: " + e.message);
+      }
     }
   </script>
 </body>
