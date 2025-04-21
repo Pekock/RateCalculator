@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Import Groupage Rate Calculator</title>
+  <title>Focus Moving Services Inc Import Groupage Tariff 2025</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body {
@@ -63,7 +63,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Import Groupage Rate Calculator</h1>
+    <h1>Focus Moving Services Inc Import Groupage Tariff 2025</h1>
     <label for="location">Select Destination:</label>
     <select id="location">
       <option value="Handout">Handout (at warehouse Toronto)</option>
@@ -75,15 +75,15 @@
       <option value="251-300 km">251-300 km (from Toronto city centre)</option>
       <option value="301-350 km">301-350 km (from Toronto city centre)</option>
       <option value="351-400 km">351-400 km (from Toronto city centre)</option>
-      <option value="Ottawa">Ottawa</option>
-      <option value="Montreal">Montreal</option>
+      <option value="Ottawa">Ottawa + 40 kms</option>
+      <option value="Montreal">Montreal + 30 km</option>
       <option value="St. John, Fredericton NB">St. John, Fredericton NB</option>
-      <option value="Halifax">Halifax</option>
-      <option value="Winnipeg">Winnipeg</option>
+      <option value="Halifax">Halifax + 40 kms</option>
+      <option value="Winnipeg">Winnipeg + 40 km</option>
       <option value="Saskatoon, Regina SK">Saskatoon, Regina SK</option>
-      <option value="Calgary">Calgary</option>
-      <option value="Edmonton">Edmonton</option>
-      <option value="Vancouver">Vancouver</option>
+      <option value="Calgary">Calgary + 30 km</option>
+      <option value="Edmonton">Edmonton + 30 km</option>
+      <option value="Vancouver">Vancouver + 30 km</option>
     </select>
 
     <label for="unit">Enter Shipment Size:</label>
@@ -106,11 +106,16 @@
 
     <div id="result"></div>
     <div class="note">
-      Containers to be sent via POE Toronto. Costing point for mileage calculations is "Toronto".<br />
-      Min volume 850 cubic feet via 20' / 1800 cft via 40'. If not, a surcharge of 400.00 cad will be applied to the container.<br />
-      Consingee must report to Customs in Toronto for shipments within 299 KMS of Toronto<br />
-      Shipments 300 km + of Toronto: subject to: + 250.00 for customs related fees<br />
-      Any destinations not listed or any questions should be sent to rates@focusmoving.com
+      POE / terminal Toronto. Costing point for KMs calculations &lt;400 km is "Toronto".<br />
+      Min Volume: 1800 ft³ / 50 m³<br />
+      Shipments 301KM+ of Toronto are subject to 250.00 surcharge.<br />
+      Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required<br />
+      Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required<br />
+      Consignee must report to Canada Border Services Agency (CBSA) for customs appt upon arrival of consignment to Canada.<br />
+      <br />
+      Rates Calculator is provided for convenience. In case of discrepancies, published copy named "FMS Import Groupage Tariff 2025" shall supersede.<br />
+      Rates are in CAD and are valid from 01 May 2025 to 30 April 2026 or unless otherwise notified by Focus Moving Services Inc.<br />
+      Rates for destinations not listed or for general queries: rates@focusmoving.com
     </div>
   </div>
 
@@ -185,7 +190,9 @@
         unitRate = locationRates[index];
         cost = unitRate * cuft;
       }
-      if (customsBondLocations.includes(location)) {
+      
+      // Check for location-based surcharges
+      if (customsBondLocations.includes(location) || location === "301-350 km" || location === "351-400 km") {
         bondFee = 250;
         cost += bondFee;
       }
@@ -197,14 +204,18 @@
         bondFee: bondFee,
         totalCost: cost.toFixed(2),
         referenceNumber: generateReferenceNumber(),
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        belowMinVolume: cuft < 1800
       };
 
       latestResult = "Volume: " + cuft.toFixed(2) + " cuft";
       if (unitRate !== null) latestResult += "\nUnit Rate: C$" + unitRate.toFixed(2) + " per cuft";
       if (bondFee > 0) latestResult += "\nCustoms Bond Fee: C$" + bondFee.toFixed(2);
       latestResult += "\nTotal Cost: C$" + cost.toFixed(2);
-      latestResult += "\nQuote Reference: " + calculationDetails.referenceNumber;
+      latestResult += "\n\nNote: Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required";
+      latestResult += "\nElevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required";
+      latestResult += "\nConsignee must report to CBSA for customs appt upon arrival of consignment to Canada.";
+      latestResult += "\n\nQuote Reference: " + calculationDetails.referenceNumber;
       document.getElementById('result').innerText = latestResult;
     }
 
@@ -266,32 +277,54 @@
         doc.text(`Destination: ${calculationDetails.location}`, 105, 125, { align: "center" });
         doc.text(`Volume: ${calculationDetails.cuft} cubic feet`, 105, 135, { align: "center" });
         
+        let yPos = 145;
+        
         if (calculationDetails.unitRate !== null) {
-          doc.text(`Unit Rate: C$${calculationDetails.unitRate} per cubic foot`, 105, 145, { align: "center" });
+          doc.text(`Unit Rate: C$${calculationDetails.unitRate} per cubic foot`, 105, yPos, { align: "center" });
+          yPos += 10;
         }
         
         if (calculationDetails.bondFee > 0) {
-          doc.text(`Customs Bond Fee: C$${calculationDetails.bondFee.toFixed(2)}`, 105, 155, { align: "center" });
+          doc.text(`Customs Bond Fee: C$${calculationDetails.bondFee.toFixed(2)}`, 105, yPos, { align: "center" });
+          yPos += 10;
         }
         
         // Total with emphasis
         doc.setFont("helvetica", "bold");
-        doc.text(`TOTAL COST: C$${calculationDetails.totalCost}`, 105, 170, { align: "center" });
+        doc.text(`TOTAL COST: C$${calculationDetails.totalCost}`, 105, yPos, { align: "center" });
+        yPos += 15;
+        
+        // Notes about services
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(10);
+        doc.text("Note: Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required", 105, yPos, { align: "center" });
+        yPos += 7;
+        doc.text("Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required", 105, yPos, { align: "center" });
+        yPos += 7;
+        doc.text("Consignee must report to CBSA for customs appt upon arrival of consignment to Canada.", 105, yPos, { align: "center" });
+        yPos += 15;
         
         // Terms and conditions
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         const terms = [
           "Terms and Conditions:",
-          "• Containers to be sent via POE Toronto. Costing point for mileage calculations is Toronto.",
-          "• Min volume 850 cubic feet via 20' / 1800 cft via 40'. If not, a surcharge of 400.00 CAD will be applied.",
-          "• Consignee must report to Customs in Toronto for shipments within 299 KMS of Toronto.",
-          "• Shipments 300 km+ of Toronto: subject to + 250.00 for customs related fees.",
+          "• POE / terminal Toronto. Costing point for KMs calculations <400 km is 'Toronto'",
+          "• Min Volume: 1800 ft³ / 50 m³",
+          "• Shipments 301KM+ of Toronto are subject to 250.00 surcharge",
+          "• Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required",
+          "• Filing of E House Bills: + 40.00 per entry / consignee, if required",
+          "• Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required",
+          "• Consignee must report to CBSA for customs appt upon arrival of consignment to Canada",
           "• Quote valid for 30 days from issue date.",
+          "• Rates Calculator is provided for convenience. In case of discrepancies, published copy",
+          "  named \"FMS Import Groupage Tariff 2025\" shall supersede.",
+          "• Rates are in CAD and are valid from 01 May 2025 to 30 April 2026 or unless otherwise",
+          "  notified by Focus Moving Services Inc.",
           "• For questions or additional destinations, contact rates@focusmoving.com"
         ];
         
-        let yPos = 200;
+        yPos = Math.max(yPos, 200);
         terms.forEach(line => {
           doc.text(line, 20, yPos);
           yPos += 6;
