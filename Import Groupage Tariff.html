@@ -49,14 +49,17 @@
     }
     #result {
       margin-top: 20px;
-      font-size: 16px;
+      white-space: pre-line;
+    }
+    .calculation-result {
+      font-size: 18px;  /* Increased from 16px */
       font-weight: bold;
       color: #006400;
-      white-space: pre-line;
     }
     .note-section {
       font-size: 14px;
       font-weight: normal;
+      color: #006400;
     }
     .note {
       font-size: 11px;
@@ -115,7 +118,7 @@
       Shipments 301KM+ of Toronto are subject to 250.00 surcharge.<br />
       Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required<br />
       Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required<br />
-      Filing of E House Bills: + 40.00 per entry / consignee, if required<br />
+      Filing of E House Bills: + 50.00 per entry / consignee<br />
       <br />
       Rates Calculator is provided for convenience. In case of discrepancies, published copy named "FMS Import Groupage Tariff 2025" shall supersede.<br />
       Rates are in CAD and are valid from 01 May 2025 to 30 April 2026 or unless otherwise notified by Focus Moving Services Inc.<br />
@@ -172,7 +175,7 @@
       const unit = document.getElementById('unit').value;
       const sizeInput = parseFloat(document.getElementById('size').value);
       if (isNaN(sizeInput) || sizeInput <= 0) {
-        document.getElementById('result').innerText = 'Please enter a valid shipment size.';
+        document.getElementById('result').innerHTML = '<span class="calculation-result">Please enter a valid shipment size.</span>';
         return;
       }
       const cuft = toCuft(sizeInput, unit);
@@ -180,7 +183,7 @@
       let unitRate = null, bondFee = 0, cost = 0;
       const locationRates = rates[location];
       if (!locationRates || locationRates.length < 9) {
-        document.getElementById('result').innerText = 'Rates for the selected location are not properly defined.';
+        document.getElementById('result').innerHTML = '<span class="calculation-result">Rates for the selected location are not properly defined.</span>';
         return;
       }
       if (cuft <= 25) cost = locationRates[0];
@@ -212,15 +215,15 @@
         belowMinVolume: cuft < 1800
       };
 
-      let resultText = "Volume: " + cuft.toFixed(2) + " cuft";
-      if (unitRate !== null) resultText += "\nUnit Rate: C$" + unitRate.toFixed(2) + " per cuft";
-      if (bondFee > 0) resultText += "\nCustoms Bond Fee: C$" + bondFee.toFixed(2);
-      resultText += "\nTotal Cost: C$" + cost.toFixed(2);
-      resultText += "\n\n<span class='note-section'>Note:</span> \nUnpacking of cartons: + 0.20 per ft³ / 25.00 min, if required\nElevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required\nFiling of E House Bills: + 40.00 per entry / consignee, if required";
-      resultText += "\n\nQuote Reference: " + calculationDetails.referenceNumber;
+      let resultHTML = `<div class="calculation-result">Volume: ${cuft.toFixed(2)} cuft`;
+      if (unitRate !== null) resultHTML += `<br>Unit Rate: C$${unitRate.toFixed(2)} per cuft`;
+      if (bondFee > 0) resultHTML += `<br>Customs Bond Fee: C$${bondFee.toFixed(2)}`;
+      resultHTML += `<br>Total Cost: C$${cost.toFixed(2)}</div>`;
       
-      document.getElementById('result').innerHTML = resultText;
-      latestResult = resultText;
+      resultHTML += `<div class="note-section"><br>Note:<br>Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required<br>Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required<br>Filing of E House Bills: + 50.00 per entry / consignee<br><br>Quote Reference: ${calculationDetails.referenceNumber}</div>`;
+      
+      document.getElementById('result').innerHTML = resultHTML;
+      latestResult = resultHTML;
     }
 
     function downloadPDF() {
@@ -305,7 +308,7 @@
         yPos += 7;
         doc.text("Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required", 105, yPos, { align: "center" });
         yPos += 7;
-        doc.text("Filing of E House Bills: + 40.00 per entry / consignee, if required", 105, yPos, { align: "center" });
+        doc.text("Filing of E House Bills: + 50.00 per entry / consignee", 105, yPos, { align: "center" });
         yPos += 15;
         
         // Terms and conditions
@@ -317,7 +320,7 @@
           "• Min Volume: 1800 ft³ / 50 m³",
           "• Shipments 301KM+ of Toronto are subject to 250.00 surcharge",
           "• Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required",
-          "• Filing of E House Bills: + 40.00 per entry / consignee, if required",
+          "• Filing of E House Bills: + 50.00 per entry / consignee",
           "• Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required",
           "• Quote valid for 30 days from issue date.",
           "• Rates Calculator is provided for convenience. In case of discrepancies, published copy",
