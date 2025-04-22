@@ -49,13 +49,17 @@
     }
     #result {
       margin-top: 20px;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
       color: #006400;
       white-space: pre-line;
     }
+    .note-section {
+      font-size: 14px;
+      font-weight: normal;
+    }
     .note {
-      font-size: 12px;
+      font-size: 11px;
       color: #666;
       margin-top: 10px;
     }
@@ -111,7 +115,7 @@
       Shipments 301KM+ of Toronto are subject to 250.00 surcharge.<br />
       Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required<br />
       Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required<br />
-      Consignee must report to Canada Border Services Agency (CBSA) for customs appt upon arrival of consignment to Canada.<br />
+      Filing of E House Bills: + 40.00 per entry / consignee, if required<br />
       <br />
       Rates Calculator is provided for convenience. In case of discrepancies, published copy named "FMS Import Groupage Tariff 2025" shall supersede.<br />
       Rates are in CAD and are valid from 01 May 2025 to 30 April 2026 or unless otherwise notified by Focus Moving Services Inc.<br />
@@ -208,15 +212,15 @@
         belowMinVolume: cuft < 1800
       };
 
-      latestResult = "Volume: " + cuft.toFixed(2) + " cuft";
-      if (unitRate !== null) latestResult += "\nUnit Rate: C$" + unitRate.toFixed(2) + " per cuft";
-      if (bondFee > 0) latestResult += "\nCustoms Bond Fee: C$" + bondFee.toFixed(2);
-      latestResult += "\nTotal Cost: C$" + cost.toFixed(2);
-      latestResult += "\n\nNote: Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required";
-      latestResult += "\nElevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required";
-      latestResult += "\nConsignee must report to CBSA for customs appt upon arrival of consignment to Canada.";
-      latestResult += "\n\nQuote Reference: " + calculationDetails.referenceNumber;
-      document.getElementById('result').innerText = latestResult;
+      let resultText = "Volume: " + cuft.toFixed(2) + " cuft";
+      if (unitRate !== null) resultText += "\nUnit Rate: C$" + unitRate.toFixed(2) + " per cuft";
+      if (bondFee > 0) resultText += "\nCustoms Bond Fee: C$" + bondFee.toFixed(2);
+      resultText += "\nTotal Cost: C$" + cost.toFixed(2);
+      resultText += "\n\n<span class='note-section'>Note:</span> \nUnpacking of cartons: + 0.20 per ft³ / 25.00 min, if required\nElevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required\nFiling of E House Bills: + 40.00 per entry / consignee, if required";
+      resultText += "\n\nQuote Reference: " + calculationDetails.referenceNumber;
+      
+      document.getElementById('result').innerHTML = resultText;
+      latestResult = resultText;
     }
 
     function downloadPDF() {
@@ -301,7 +305,7 @@
         yPos += 7;
         doc.text("Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required", 105, yPos, { align: "center" });
         yPos += 7;
-        doc.text("Consignee must report to CBSA for customs appt upon arrival of consignment to Canada.", 105, yPos, { align: "center" });
+        doc.text("Filing of E House Bills: + 40.00 per entry / consignee, if required", 105, yPos, { align: "center" });
         yPos += 15;
         
         // Terms and conditions
@@ -315,7 +319,6 @@
           "• Elevator and Long carry: .50 per ft³ / 50.00 MIN, 350.00 MAX, if required",
           "• Filing of E House Bills: + 40.00 per entry / consignee, if required",
           "• Unpacking of cartons: + 0.20 per ft³ / 25.00 min, if required",
-          "• Consignee must report to CBSA for customs appt upon arrival of consignment to Canada",
           "• Quote valid for 30 days from issue date.",
           "• Rates Calculator is provided for convenience. In case of discrepancies, published copy",
           "  named \"FMS Import Groupage Tariff 2025\" shall supersede.",
