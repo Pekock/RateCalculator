@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merged Groupage Tariff Calculator</title>
+<style>
+body {font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;}
+.container {background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1);}
+h1 {color: #003366; text-align: center; margin-bottom: 30px;}
+.form-group {margin-bottom: 20px;}
+label {display: block; margin-bottom: 5px; font-weight: bold;}
+select, input {width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;}
+button {background-color: #003366; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; display: block; margin: 20px auto; width: 200px;}
+button:hover {background-color: #004b8f;}
+#results {display: none; margin-top: 30px; background-color: #f9f9f9; padding: 20px; border-radius: 5px; border-left: 5px solid #003366;}
+.result-item {display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;}
+.total {font-weight: bold; font-size: 18px; margin-top: 15px; padding-top: 15px; border-top: 2px solid #003366;}
+.note {margin-top: 20px; font-style: italic; color: #666;}
+#error {color: red; display: none; margin-top: 10px;}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Groupage Tariff Calculator</h1>
+
+<div class="form-group">
+<label for="origin">Origin:</label>
+<select id="origin" required>
+<option value="">-- Select Origin --</option>
+<option value="Montreal/Ottawa">Warehouse Montreal/Ottawa</option>
+<option value="Pickering">Warehouse Pickering</option>
+</select>
+</div>
+
+<div class="form-group">
+<label for="destination">Destination:</label>
+<select id="destination" required></select>
+</div>
+
+<div class="form-group">
+<label for="exchangeRate">EUR to CAD Exchange Rate:</label>
+<input type="number" id="exchangeRate" min="0" step="0.0001" required placeholder="e.g. 1.45">
+</div>
+
+<div class="form-group">
+<label for="markup">% Markup on European Tariff Rate:</label>
+<input type="number" id="markup" min="0" step="0.01" required placeholder="e.g. 10">
+</div>
+
+<div class="form-group">
+<label for="measurementType">Volume/Weight Type:</label>
+<select id="measurementType" required>
+<option value="">-- Select Measurement Type --</option>
+<option value="CUFT">Cubic Feet (CUFT)</option>
+<option value="CBM">Cubic Meters (CBM)</option>
+<option value="LBS">Pounds (LBS)</option>
+<option value="KG">Kilograms (KG)</option>
+</select>
+</div>
+
+<div class="form-group">
+<label for="measurement">Volume/Weight Value:</label>
+<input type="number" id="measurement" min="0" step="0.01" required placeholder="Enter value">
+<div id="error">Please enter a value greater than 0</div>
+</div>
+
+<button onclick="calculateTariff()">Calculate Tariff</button>
+
+<div id="results">
+<h2>Tariff Calculation</h2>
+<div id="calculation-details"></div>
+<div id="calculation-total" class="total"></div>
+<div class="note">Delivery charges to final address are calculated separately.</div>
+</div>
+</div>
+
+<script>
+const rates = {
+"Belgium - Netherlands - Luxembourg":[550,135,130],
+"Germany":[650,150,145],
+"France":[750,165,150],
+"Denmark":[750,165,150],
+"Switzerland":[850,180,165],
+"Austria":[850,180,165],
+"Czech Republic":[850,180,165],
+"France Brittany":[900,205,185],
+"Spain":[900,205,185],
+"Portugal":[900,205,185],
+"Italy (North of Rome)":[900,205,185],
+"Hungary":[900,205,185],
+"Slovenia":[900,205,185],
+"Poland":[900,205,185],
+"Ireland":[900,205,185],
+"Croatia":[1100,225,205],
+"Slovakia":[1100,225,205],
+"Finland (South)":[1100,225,205],
+"Sweden (South)":[1100,225,205],
+"Norway (South)":[1100,225,205],
+"Romania":[1100,250,225],
+"Bulgaria":[1100,250,225],
+"Greece Mainland":[1100,250,225],
+"Italy (Rome and South of Rome)":[1100,275,250],
+"Estonia":[1350,250,225],
+"Latvia":[1350,250,225],
+"Lithuania":[1350,250,225],
+"Sweden (Umea - Lulea Area)":[1350,275,250],
+"Norway (Trondheim - Tromso)":[1500,275,250],
+"Spain (Balearic Islands)":[1350,275,250],
+"Bosnia":[1650,285,260],
+"North Macedonia":[1650,285,260],
+"Albania":[1650,285,260],
+"Serbia":[1650,285,260],
+"Montenegro":[1650,285,260],
+"Italy (Sicily)":[1650,285,260],
+"Malta":[1750,300,275],
+"Greece (Islands - Rhodos, Crete, Kos)":[1750,300,275],
+"Kazakhstan (Almaty)":[2200,400,300],
+"Turkey (Istanbul)":[2200,400,300],
+"Kyrgyzstan":[2500,500,400],
+"Cyprus (South/Limassol)":[2500,500,400],
+"Madeira":[2500,500,400],
+"Uzbekistan":[2500,500,400],
+"Tajikistan":[2500,500,400],
+"Azerbaijan":[3000,600,500],
+"Canary Islands":[1750,300,275],
+"Georgia":[2200,400,300],
+"Armenia":[2200,400,300]
+};
+
+const destinationSelect = document.getElementById("destination");
+for (const dest in rates) {
+  let option = document.createElement("option");
+  option.value = dest;
+  option.text = dest;
+  destinationSelect.add(option);
+}
+
+function calculateTariff() {
+const origin = document.getElementById('origin').value;
+const destination = document.getElementById('destination').value;
+const measurementType = document.getElementById('measurementType').value;
+const measurementValue = parseFloat(document.getElementById('measurement').value);
+const exchangeRate = parseFloat(document.getElementById('exchangeRate').value);
+const markup = parseFloat(document.getElementById('markup').value);
+
+if (!origin || !destination || !measurementType || isNaN(measurementValue) || measurementValue <= 0 || isNaN(exchangeRate) || exchangeRate <= 0 || isNaN(markup) || markup < 0) {
+document.getElementById('error').style.display = 'block';
+document.getElementById('results').style.display = 'none';
+return;
+} else {
+document.getElementById('error').style.display = 'none';
+}
+
+let volumeInCUFT = 0;
+let volumeInCBM = 0;
+switch(measurementType) {
+case 'CUFT': volumeInCUFT = measurementValue; volumeInCBM = measurementValue / 35.315; break;
+case 'CBM': volumeInCBM = measurementValue; volumeInCUFT = measurementValue * 35.315; break;
+case 'LBS': volumeInCUFT = measurementValue / 7; volumeInCBM = volumeInCUFT / 35.315; break;
+case 'KG': const lbs = measurementValue * 2.20462; volumeInCUFT = lbs / 7; volumeInCBM = volumeInCUFT / 35.315; break;
+}
+
+const details = [];
+let totalCharge = 0;
+if (origin === 'Montreal/Ottawa') {
+const truckingRate = Math.max(200, volumeInCBM * 200 / 2);
+details.push({ description: 'Trucking from Montreal/Ottawa to Pickering', calculation: `$200 per 2 CBM × ${volumeInCBM.toFixed(2)} CBM (Min. $200)`, amount: truckingRate });
+totalCharge += truckingRate;
+}
+
+const warehouseHandling = Math.max(150, volumeInCUFT * 0.75);
+details.push({ description: 'Warehouse Handling Pickering', calculation: `$0.75 per CUFT × ${volumeInCUFT.toFixed(2)} CUFT (Min. $150)`, amount: warehouseHandling });
+totalCharge += warehouseHandling;
+
+const adminFee = 350;
+details.push({ description: 'Admin Fee', calculation: 'Flat Rate', amount: adminFee });
+totalCharge += adminFee;
+
+const oceanFreightVolume = Math.max(100, volumeInCUFT);
+const oceanFreight = oceanFreightVolume * 4.00;
+details.push({ description: 'Ocean Freight (Europe)', calculation: `$4.00 per CUFT × ${oceanFreightVolume.toFixed(2)} CUFT (Min. 100 CUFT)`, amount: oceanFreight });
+totalCharge += oceanFreight;
+
+const destMinCharge = rates[destination][0];
+const destRate = volumeInCBM < 10 ? rates[destination][1] : rates[destination][2];
+let destinationChargeEUR = volumeInCBM * destRate;
+if (destinationChargeEUR < destMinCharge) destinationChargeEUR = destMinCharge;
+const markedUpDestinationEUR = destinationChargeEUR * (1 + markup / 100);
+const destinationChargeCAD = markedUpDestinationEUR * exchangeRate;
+details.push({ description: `Destination Delivery to ${destination}`, calculation: `Base EUR: €${destinationChargeEUR.toFixed(2)} (€${destRate.toFixed(2)}/m³) + ${markup}% markup`, amount: destinationChargeCAD });
+totalCharge += destinationChargeCAD;
+
+const detailsContainer = document.getElementById('calculation-details');
+detailsContainer.innerHTML = '';
+details.forEach(item => {
+const div = document.createElement('div');
+div.className = 'result-item';
+div.innerHTML = `<div><strong>${item.description}</strong><br><small>${item.calculation}</small></div><div>${item.amount.toFixed(2)} CAD</div>`;
+detailsContainer.appendChild(div);
+});
+
+document.getElementById('calculation-total').innerHTML = `<div class="result-item"><div>TOTAL CHARGE</div><div>${totalCharge.toFixed(2)} CAD</div></div>`;
+document.getElementById('results').style.display = 'block';
+}
+</script>
+</body>
+</html>
