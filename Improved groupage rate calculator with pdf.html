@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Groupage Tariff Calculator</title>
+<style>
+  :root {
+    --primary: #2c3e50;
+    --secondary: #3498db;
+    --accent: #e74c3c;
+    --light: #ecf0f1;
+    --dark: #2c3e50;
+    --success: #27ae60;
+    --border-radius: 6px;
+    --box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+  }
+  
+  .container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  
+  .card {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    overflow: hidden;
+  }
+  
+  .card-header {
+    background-color: var(--primary);
+    color: white;
+    padding: 20px 30px;
+    position: relative;
+  }
+  
+  .card-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+  }
+  
+  .card-body {
+    padding: 30px;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+  }
+  
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark);
+  }
+  
+  select,
+  input[type="number"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background-color: white;
+  }
+  
+  select:hover,
+  input[type="number"]:hover {
+    border-color: var(--secondary);
+  }
+  
+  select:focus,
+  input[type="number"]:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  }
+  
+  button {
+    background-color: var(--secondary);
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  button:hover {
+    background-color: #2980b9;
+  }
+  
+  .button-container {
+    margin-top: 10px;
+  }
+  
+  .buttons-row {
+    display: flex;
+    gap: 15px;
+  }
+  
+  .buttons-row button {
+    flex: 1;
+  }
+  
+  /* Print button styling */
+  .print-button {
+    background-color: var(--success);
+    margin-top: 15px;
+  }
+  
+  .print-button:hover {
+    background-color: #219653;
+  }
+  
+  #results {
+    display: none;
+    margin-top: 30px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+  }
+  
+  .results-header {
+    background-color: var(--primary);
+    color: white;
+    padding: 15px 20px;
+  }
+  
+  .results-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  
+  .results-body {
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+  }
+  
+  .result-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .result-item:last-child {
+    border-bottom: none;
+  }
+  
+  .result-description small {
+    display: block;
+    color: #666;
+    margin-top: 4px;
+  }
+  
+  .result-amount {
+    font-weight: 500;
+    text-align: right;
+  }
+  
+  .total {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid var(--primary);
+    font-weight: bold;
+    font-size: 18px;
+  }
+  
+  .total .result-item {
+    border-bottom: none;
+  }
+  
+  .total .result-amount {
+    font-size: 22px;
+    color: var(--primary);
+  }
+  
+  .note {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--secondary);
+    font-style: italic;
+    color: #666;
+  }
+  
+  #error {
+    color: var(--accent);
+    display: none;
+    margin-top: 5px;
+    font-size: 14px;
+  }
+  
+  .info-icon {
+    cursor: help;
+    color: var(--secondary);
+    margin-left: 5px;
+  }
+  
+  .footer {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+  }
+  
+  /* Loading spinner */
+  .loader {
+    display: none;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--secondary);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Tooltip */
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-weight: normal;
+    font-size: 14px;
+  }
+  
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+  }
+  
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  /* Print styles */
+  @media print {
+    body {
+      background-color: white;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .container {
+      width: 100%;
+      margin: 0;
+      padding: 15px;
+      max-width: none;
+    }
+    
+    .card {
+      box-shadow: none;
+      border: none;
+    }
+    
+    .card-header {
+      background-color: white !important;
+      color: black !important;
+      padding: 10px 0;
+      border-bottom: 2px solid #333;
+    }
+    
+    .card-body {
+      padding: 15px 0;
+    }
+    
+    .form-grid, 
+    .button-container,
+    .buttons-row,
+    .loader,
+    .print-button,
+    .footer {
+      display: none !important;
+    }
+    
+    #results {
+      display: block !important;
+      margin: 0;
+      border: none;
+    }
+    
+    .results-header {
+      background-color: white !important;
+      color: black !important;
+      padding: 10px 0;
+      border-bottom: 1px solid #333;
+    }
+    
+    .results-body {
+      border: none;
+      padding: 10px 0;
+    }
+    
+    .note {
+      border-left: 2px solid #333;
+      background-color: white;
+    }
+    
+    /* Add some print-specific elements */
+    .print-details {
+      display: block !important;
+      margin-bottom: 20px;
+    }
+    
+    .print-details table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    
+    .print-details th,
+    .print-details td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    
+    .print-details th {
+      background-color: #f2f2f2;
+    }
+  }
+  
+  /* Hide print details in normal view */
+  .print-details {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <h1>Groupage Tariff Calculator</h1>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div>
+          <div class="form-group">
+            <label for="originServiceToggle">
+              Origin Service (C$ 4.75/cuft)
+              <span class="tooltip">
+                <i class="info-icon">ⓘ</i>
+                <span class="tooltiptext">Optional service charged at C$4.75 per cubic foot</span>
+              </span>
+            </label>
+            <select id="originServiceToggle" class="form-control">
+              <option value="yes">Yes</option>
+              <option value="no" selected>No</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="origin">Origin Location</label>
+            <select id="origin" class="form-control" required>
+              <option value="">-- Select Origin --</option>
+              <option value="Montreal/Ottawa">Warehouse Montreal/Ottawa</option>
+              <option value="Pickering">Warehouse Pickering</option>
+            </select>
+            <div id="originError" class="error"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="destination">Destination Country/Region</label>
+            <select id="destination" class="form-control" required></select>
+            <div id="destinationError" class="error"></div>
+          </div>
+        </div>
+        
+        <div>
+          <div class="form-group">
+            <label for="exchangeRate">
+              EUR to CAD Exchange Rate
+              <span class="tooltip">
+                <i class="info-icon">ⓘ</i>
+                <span class="tooltiptext">Current exchange rate from Euro to Canadian Dollar</span>
+              </span>
+            </label>
+            <input type="number" id="exchangeRate" class="form-control" min="0" step="0.01" value="1.65" required>
+            <div id="exchangeRateError" class="error"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="markup">
+              % Markup on European Tariff
+              <span class="tooltip">
+                <i class="info-icon">ⓘ</i>
+                <span class="tooltiptext">Percentage markup applied to the European tariff rate</span>
+              </span>
+            </label>
+            <input type="number" id="markup" class="form-control" min="0" step="0.01" value="10" required>
+            <div id="markupError" class="error"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="measurementType">Measurement Type</label>
+            <select id="measurementType" class="form-control" required>
+              <option value="">-- Select Measurement Type --</option>
+              <option value="CUFT">Cubic Feet (CUFT)</option>
+              <option value="CBM">Cubic Meters (CBM)</option>
+              <option value="LBS">Pounds (LBS)</option>
+              <option value="KG">Kilograms (KG)</option>
+            </select>
+            <div id="measurementTypeError" class="error"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="measurement">Measurement Value</label>
+            <input type="number" id="measurement" class="form-control" min="0" step="0.01" required placeholder="Enter value">
+            <div id="error" class="error">Please enter a value greater than 0</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="button-container">
+        <button onclick="calculateTariff()">Calculate Tariff</button>
+        <div class="loader" id="loader"></div>
+      </div>
+      
+      <div id="results">
+        <!-- Print-only details section -->
+        <div class="print-details">
+          <h3>Tariff Calculation Details</h3>
+          <table id="print-input-details">
+            <tr>
+              <th>Parameter</th>
+              <th>Value</th>
+            </tr>
+            <!-- This will be populated by JavaScript -->
+          </table>
+          <p>Date of Calculation: <span id="print-date"></span></p>
+        </div>
+        
+        <div class="results-header">
+          <h2>Tariff Calculation Results</h2>
+        </div>
+        <div class="results-body">
+          <div id="calculation-details"></div>
+          <div id="calculation-total" class="total"></div>
+          <div class="note">
+            <strong>Note:</strong> Delivery charges to final address are calculated separately.
+          </div>
+          
+          <!-- Print to PDF button -->
+          <div class="button-container">
+            <button onclick="printToPDF()" class="print-button">Print to PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <p>Groupage Tariff Calculator © 2025</p>
+  </div>
+</div>
+
+<script>
+const rates = {
+"Belgium - Netherlands - Luxembourg":[550,135,130],
+"Germany":[650,150,145],
+"France":[750,165,150],
+"Denmark":[750,165,150],
+"Switzerland":[850,180,165],
+"Austria":[850,180,165],
+"Czech Republic":[850,180,165],
+"France Brittany":[900,205,185],
+"Spain":[900,205,185],
+"Portugal":[900,205,185],
+"Italy (North of Rome)":[900,205,185],
+"Hungary":[900,205,185],
+"Slovenia":[900,205,185],
+"Poland":[900,205,185],
+"Ireland":[900,205,185],
+"Croatia":[1100,225,205],
+"Slovakia":[1100,225,205],
+"Finland (South)":[1100,225,205],
+"Sweden (South)":[1100,225,205],
+"Norway (South)":[1100,225,205],
+"Romania":[1100,250,225],
+"Bulgaria":[1100,250,225],
+"Greece Mainland":[1100,250,225],
+"Italy (Rome and South of Rome)":[1100,275,250],
+"Estonia":[1350,250,225],
+"Latvia":[1350,250,225],
+"Lithuania":[1350,250,225],
+"Sweden (Umea - Lulea Area)":[1350,275,250],
+"Norway (Trondheim - Tromso)":[1500,275,250],
+"Spain (Balearic Islands)":[1350,275,250],
+"Bosnia":[1650,285,260],
+"North Macedonia":[1650,285,260],
+"Albania":[1650,285,260],
+"Serbia":[1650,285,260],
+"Montenegro":[1650,285,260],
+"Italy (Sicily)":[1650,285,260],
+"Malta":[1750,300,275],
+"Greece (Islands - Rhodos, Crete, Kos)":[1750,300,275],
+"Kazakhstan (Almaty)":[2200,400,300],
+"Turkey (Istanbul)":[2200,400,300],
+"Kyrgyzstan":[2500,500,400],
+"Cyprus (South/Limassol)":[2500,500,400],
+"Madeira":[2500,500,400],
+"Uzbekistan":[2500,500,400],
+"Tajikistan":[2500,500,400],
+"Azerbaijan":[3000,600,500],
+"Canary Islands":[1750,300,275],
+"Georgia":[2200,400,300],
+"Armenia":[2200,400,300]
+};
+
+// Populate destination dropdown with destinations sorted alphabetically
+const destinationSelect = document.getElementById("destination");
+const sortedDestinations = Object.keys(rates).sort();
+for (const dest of sortedDestinations) {
+  let option = document.createElement("option");
+  option.value = dest;
+  option.text = dest;
+  destinationSelect.add(option);
+}
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount);
+}
+
+function formatNumber(number, decimals = 2) {
+  return new Intl.NumberFormat('en-CA', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(number);
+}
+
+// Function to handle printing to PDF
+function printToPDF() {
+  // Update the print date
+  const now = new Date();
+  document.getElementById('print-date').textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+  
+  // Trigger browser print dialog
+  window.print();
+}
+
+function calculateTariff() {
+  const origin = document.getElementById('origin').value;
+  const destination = document.getElementById('destination').value;
+  const measurementType = document.getElementById('measurementType').value;
+  const measurementValue = parseFloat(document.getElementById('measurement').value);
+  const exchangeRate = parseFloat(document.getElementById('exchangeRate').value);
+  const markup = parseFloat(document.getElementById('markup').value);
+  const originServiceChecked = document.getElementById('originServiceToggle').value === 'yes';
+  
+  // Show loading spinner
+  document.getElementById('loader').style.display = 'block';
+  
+  // Validate inputs
+  if (!origin || !destination || !measurementType || isNaN(measurementValue) || measurementValue <= 0 || isNaN(exchangeRate) || exchangeRate <= 0 || isNaN(markup) || markup < 0) {
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('loader').style.display = 'none';
+    return;
+  } else {
+    document.getElementById('error').style.display = 'none';
+  }
+  
+  // Simulate calculation delay
+  setTimeout(() => {
+    // Calculate volume conversions
+    let volumeInCUFT = 0;
+    let volumeInCBM = 0;
+    switch(measurementType) {
+      case 'CUFT': volumeInCUFT = measurementValue; volumeInCBM = measurementValue / 35.315; break;
+      case 'CBM': volumeInCBM = measurementValue; volumeInCUFT = measurementValue * 35.315; break;
+      case 'LBS': volumeInCUFT = measurementValue / 7; volumeInCBM = volumeInCUFT / 35.315; break;
+      case 'KG': const lbs = measurementValue * 2.20462; volumeInCUFT = lbs / 7; volumeInCBM = volumeInCUFT / 35.315; break;
+    }
+    
+    const details = [];
+    let totalCharge = 0;
+    
+    // Add Admin Fee as first line item
+    const adminFee = 200.00;
+    details.push({ 
+      description: 'Admin Fee', 
+      calculation: 'Standard processing fee', 
+      amount: adminFee 
+    });
+    totalCharge += adminFee;
+    
+    // Origin Service
+    if (originServiceChecked) {
+      const originServiceVolume = Math.max(volumeInCUFT, 150);
+      const originServiceRate = 4.75;
+      const originServiceCharge = originServiceVolume * originServiceRate;
+      details.push({ 
+        description: 'Origin Service', 
+        calculation: `C$4.75 per CUFT × ${formatNumber(originServiceVolume)} CUFT (Min. 150 CUFT)`, 
+        amount: originServiceCharge 
+      });
+      totalCharge += originServiceCharge;
+    }
+    
+    // Trucking from Montreal/Ottawa
+    if (origin === 'Montreal/Ottawa') {
+      const truckingRate = Math.max(200, volumeInCBM * 200 / 2);
+      details.push({ 
+        description: 'Trucking from Montreal/Ottawa to Pickering', 
+        calculation: `$200 per 2 CBM × ${formatNumber(volumeInCBM)} CBM (Min. $200)`, 
+        amount: truckingRate 
+      });
+      totalCharge += truckingRate;
+    }
+    
+    // Warehouse Handling
+    if (!(origin === 'Pickering' && originServiceChecked)) {
+      const warehouseHandling = Math.max(150, volumeInCUFT * 0.75);
+      details.push({ 
+        description: 'Warehouse Handling Pickering', 
+        calculation: `$0.75 per CUFT × ${formatNumber(volumeInCUFT)} CUFT (Min. $150)`, 
+        amount: warehouseHandling 
+      });
+      totalCharge += warehouseHandling;
+    }
+    
+    // Ocean Freight
+    const oceanFreightVolume = Math.max(100, volumeInCUFT);
+    const oceanFreight = oceanFreightVolume * 4.00;
+    details.push({ 
+      description: 'Ocean Freight (Europe)', 
+      calculation: `$4.00 per CUFT × ${formatNumber(oceanFreightVolume)} CUFT (Min. 100 CUFT)`, 
+      amount: oceanFreight 
+    });
+    totalCharge += oceanFreight;
+    
+    // Destination Charges
+    const destMinCharge = rates[destination][0];
+    const destRate = volumeInCBM < 10 ? rates[destination][1] : rates[destination][2];
+    let destinationChargeEUR = volumeInCBM * destRate;
+    if (destinationChargeEUR < destMinCharge) destinationChargeEUR = destMinCharge;
+    const markedUpDestinationEUR = destinationChargeEUR * (1 + markup / 100);
+    const destinationChargeCAD = markedUpDestinationEUR * exchangeRate;
+    details.push({ 
+      description: `Destination Delivery to ${destination}`, 
+      calculation: `Base EUR: €${formatNumber(destinationChargeEUR)} (€${formatNumber(destRate)}/m³) + ${markup}% markup × ${formatNumber(exchangeRate)} exchange rate`, 
+      amount: destinationChargeCAD 
+    });
+    totalCharge += destinationChargeCAD;
+    
+    // Display results
+    const detailsContainer = document.getElementById('calculation-details');
+    detailsContainer.innerHTML = '';
+    details.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'result-item';
+      div.innerHTML = `
+        <div class="result-description">
+          <strong>${item.description}</strong>
+          <small>${item.calculation}</small>
+        </div>
+        <div class="result-amount">${formatCurrency(item.amount)}</div>
+      `;
+      detailsContainer.appendChild(div);
+    });
+    
+    document.getElementById('calculation-total').innerHTML = `
+      <div class="result-item">
+        <div class="result-description">TOTAL CHARGE</div>
+        <div class="result-amount">${formatCurrency(totalCharge)}</div>
+      </div>
+    `;
+    
+    // Update print-only details table
+    const printDetailsTable = document.getElementById('print-input-details');
+    printDetailsTable.innerHTML = `
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Origin Location</td>
+        <td>${origin}</td>
+      </tr>
+      <tr>
+        <td>Destination</td>
+        <td>${destination}</td>
+      </tr>
+      <tr>
+        <td>Origin Service</td>
+        <td>${originServiceChecked ? 'Yes' : 'No'}</td>
+      </tr>
+      <tr>
+        <td>Measurement</td>
+        <td>${formatNumber(measurementValue)} ${measurementType}</td>
+      </tr>
+      <tr>
+        <td>Calculated Volume</td>
+        <td>${formatNumber(volumeInCUFT)} CUFT / ${formatNumber(volumeInCBM)} CBM</td>
+      </tr>
+      <tr>
+        <td>Exchange Rate (EUR to CAD)</td>
+        <td>${formatNumber(exchangeRate)}</td>
+      </tr>
+      <tr>
+        <td>Markup</td>
+        <td>${formatNumber(markup)}%</td>
+      </tr>
+    `;
+    
+    // Update the print date
+    const now = new Date();
+    document.getElementById('print-date').textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+    
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('loader').style.display = 'none';
+    
+    // Scroll to results
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+  }, 500); // Simulate calculation delay
+}
+</script>
+
+</body>
+</html>
