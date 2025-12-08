@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>John Gray Moving - Rate Calculator 2026</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .calculator-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        input[type="number"], select {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .unit-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            min-width: 80px;
+        }
+
+        .toggle-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #667eea;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .results {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid #667eea;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+            align-items: center;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #34495e;
+            font-size: 1.1em;
+        }
+
+        .result-value {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .total-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .total-section .result-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .total-section .result-label,
+        .total-section .result-value {
+            color: white;
+        }
+
+        .total-section .result-value {
+            font-size: 1.5em;
+        }
+
+        .additional-services {
+            margin-top: 30px;
+        }
+
+        .service-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .service-checkbox:hover {
+            background: #f8f9fa;
+        }
+
+        .service-checkbox input {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .service-checkbox label {
+            flex: 1;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .service-price {
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .info-box p {
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .unit-label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚚 John Gray Moving</h1>
+            <p>Rate Calculator 2026 - Origin & Destination Services</p>
+        </div>
+
+        <div class="content">
+            <div class="calculator-section">
+                <h2 class="section-title">Service Type</h2>
+                <div class="toggle-container">
+                    <button class="toggle-btn active" onclick="setServiceType('origin')">Origin Services</button>
+                    <button class="toggle-btn" onclick="setServiceType('destination')">Destination Services</button>
+                </div>
+
+                <h2 class="section-title">Shipment Details</h2>
+                
+                <div class="input-group">
+                    <label>Shipment Measurement:</label>
+                    <div class="input-row">
+                        <input type="number" id="measurementValue" placeholder="Enter value" min="0" step="0.01" oninput="updateMeasurement()">
+                        <select id="measurementUnit" onchange="updateMeasurement()">
+                            <option value="lbs">lbs (pounds)</option>
+                            <option value="kg">kg (kilograms)</option>
+                            <option value="cuft">cu ft (cubic feet)</option>
+                            <option value="cbm">cbm (cubic meters)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Calculated Values:</label>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span><strong>Weight:</strong></span>
+                            <span id="displayWeight">0 lbs (0 kg)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><strong>Volume:</strong></span>
+                            <span id="displayVolume">0 cu ft (0 cbm)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="distance">Distance from warehouse (optional):</label>
+                    <div class="input-row">
+                        <input type="number" id="distance" placeholder="Enter distance if > 50 km" min="0" value="0">
+                        <span class="unit-label">km</span>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>Conversion Rates:</strong></p>
+                    <p>• Weight: 1 kg = 2.20462 lbs</p>
+                    <p>• Volume: 1 cbm = 35.3147 cu ft</p>
+                    <p>• Density: 7 lbs per cubic foot</p>
+                    <p><strong>Out of Area:</strong> Beyond 50 km radius = $3.75/km additional charge</p>
+                </div>
+
+                <h2 class="section-title" style="margin-top: 30px;">Special Packaging</h2>
+                
+                <div class="input-group">
+                    <label>Number of COS Cartons:</label>
+                    <div class="input-row">
+                        <input type="number" id="cosCartons" placeholder="0" min="0" value="0" onchange="calculate()">
+                        <span class="unit-label">@ $225.00 each</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Number of CO8 or CO7 Cartons:</label>
+                    <div class="input-row">
+                        <input type="number" id="co8Cartons" placeholder="0" min="0" value="0" onchange="calculate()">
+                        <span class="unit-label">@ $275.00 each</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Number of Lift Vans:</label>
+                    <div class="input-row">
+                        <input type="number" id="liftVans" placeholder="0" min="0" value="0" onchange="calculate()">
+                        <span class="unit-label">@ $470.00 each</span>
+                    </div>
+                </div>
+
+                <h2 class="section-title" style="margin-top: 30px;">Pickup & Delivery Charges</h2>
+                
+                <div class="input-group">
+                    <label>Select P&D Charge Type:</label>
+                    <select id="pdChargeType" onchange="calculate()">
+                        <option value="none">None</option>
+                        <option value="sea">Import/Export SEA Shipment - $800.00</option>
+                        <option value="lcl">Import/Export LCL Shipment - $370.00</option>
+                        <option value="air">Import/Export AIR Shipment - $300.00</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="calculator-section" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+                <h2 class="section-title" style="color: #856404;">Additional Rates (Information)</h2>
+                <p style="color: #856404; margin-bottom: 15px;"><strong>The following services require custom quotes or special arrangements:</strong></p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <strong>Labor Rate:</strong><br>
+                        $125.00/hour for 2 men
+                    </div>
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <strong>Waiting Time:</strong><br>
+                        $60.00 per hour per man
+                    </div>
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <strong>Crew Stay:</strong><br>
+                        $400.00/night (Origin)<br>
+                        $450.00/night (Destination)
+                    </div>
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <strong>Disposal Fee:</strong><br>
+                        Depends on volume (Min $150)
+                    </div>
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <strong>Crating:</strong><br>
+                        $18.00/cu ft (minimum: $250.00)
+                    </div>
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <strong>Uncrating:</strong><br>
+                        $4.00/cu ft (minimum: $40.00)
+                    </div>
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <strong>Container Wait Time:</strong><br>
+                        $95 per hour after 1st hour
+                    </div>
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <strong>Baby Grand Piano:</strong><br>
+                        Based on custom quote
+                    </div>
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <strong>Additional Debris Pickup:</strong><br>
+                        $150.00 (Destination only)
+                    </div>
+                </div>
+            </div>
+
+            <div class="calculator-section additional-services">
+                <h2 class="section-title">Additional Services</h2>
+                
+                <div class="service-checkbox">
+                    <input type="checkbox" id="whh" onchange="calculate()">
+                    <label for="whh">Warehouse Handling (IN & OUT)</label>
+                    <span class="service-price">$9.50/100 lbs</span>
+                </div>
+
+                <div class="service-checkbox">
+                    <input type="checkbox" id="sit" onchange="calculate()">
+                    <label for="sit">Storage in Transit (SIT)</label>
+                    <span class="service-price">$8.50/100 lbs</span>
+                </div>
+
+                <div class="service-checkbox">
+                    <input type="checkbox" id="piano" onchange="calculate()">
+                    <label for="piano">Piano Handling (Upright, Main Floor)</label>
+                    <span class="service-price">$300.00</span>
+                </div>
+
+                <div class="service-checkbox">
+                    <input type="checkbox" id="access" onchange="calculate()">
+                    <label for="access">Access Charge (long walk/elevator after 75ft)</label>
+                    <span class="service-price">$6.00/100 lbs</span>
+                </div>
+
+                <div class="service-checkbox">
+                    <input type="checkbox" id="stairs" onchange="calculate()">
+                    <label for="stairs">Stair Carry (over 2nd floor)</label>
+                    <span class="service-price">$6.00/100 lbs</span>
+                </div>
+
+                <div class="service-checkbox">
+                    <input type="checkbox" id="parking" onchange="calculate()">
+                    <label for="parking">Parking Permit</label>
+                    <span class="service-price">$375.00</span>
+                </div>
+
+                <div class="service-checkbox">
+                    <input type="checkbox" id="quebec" onchange="calculate()">
+                    <label for="quebec">Quebec Surcharge</label>
+                    <span class="service-price">$450.00</span>
+                </div>
+
+                <div class="service-checkbox">
+                    <input type="checkbox" id="ottawa" onchange="calculate()">
+                    <label for="ottawa">Ottawa Surcharge</label>
+                    <span class="service-price">$450.00</span>
+                </div>
+
+                <div class="service-checkbox">
+                    <input type="checkbox" id="carblock" onchange="calculate()">
+                    <label for="carblock">Car Block & Brace / Unblock & Unbrace</label>
+                    <span class="service-price" id="carblockPrice">$350.00</span>
+                </div>
+
+                <div class="service-checkbox">
+                    <input type="checkbox" id="motorcycle" onchange="calculate()">
+                    <label for="motorcycle">Motorcycle Block & Brace / Unblock & Unbrace</label>
+                    <span class="service-price" id="motorcyclePrice">$250.00</span>
+                </div>
+            </div>
+
+            <button class="calculate-btn" onclick="calculate()">Calculate Total Cost</button>
+
+            <button class="calculate-btn" id="exportPdfBtn" onclick="exportToPDF()" style="display: none; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); margin-top: 15px;">
+                📄 Export Quote to PDF
+            </button>
+
+            <div class="calculator-section results" id="results" style="display: none;">
+                <h2 class="section-title">Cost Breakdown</h2>
+                
+                <div class="result-item">
+                    <span class="result-label">Calculated Weight:</span>
+                    <span class="result-value" id="calcWeight">0 lbs</span>
+                </div>
+
+                <div class="result-item">
+                    <span class="result-label">Calculated Volume:</span>
+                    <span class="result-value" id="calcVolume">0 cu ft</span>
+                </div>
+
+                <div class="result-item">
+                    <span class="result-label">Base Service Rate:</span>
+                    <span class="result-value" id="baseRate">$0.00</span>
+                </div>
+
+                <div class="result-item" id="distanceChargeRow" style="display: none;">
+                    <span class="result-label">Out of Area Charge:</span>
+                    <span class="result-value" id="distanceCharge">$0.00</span>
+                </div>
+
+                <div class="result-item" id="packagingChargesRow" style="display: none;">
+                    <span class="result-label">Special Packaging:</span>
+                    <span class="result-value" id="packagingCharges">$0.00</span>
+                </div>
+
+                <div class="result-item" id="pdChargesRow" style="display: none;">
+                    <span class="result-label">P&D Charges:</span>
+                    <span class="result-value" id="pdCharges">$0.00</span>
+                </div>
+
+                <div id="additionalCharges"></div>
+
+                <div class="total-section">
+                    <div class="result-item">
+                        <span class="result-label">TOTAL ESTIMATED COST:</span>
+                        <span class="result-value" id="totalCost">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>Note:</strong> This is an estimate based on the 2026 contractor rate agreement. Final costs may vary based on specific circumstances. Some services (baby grand piano, disposal fees, crating, etc.) require custom quotes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let serviceType = 'origin';
+        const DENSITY = 7; // lbs per cu ft
+        const LBS_PER_KG = 2.20462;
+        const CUFT_PER_CBM = 35.3147;
+
+        // Store the values in lbs and cuft
+        let weightLbs = 0;
+        let volumeCuft = 0;
+
+        function updateMeasurement() {
+            const value = parseFloat(document.getElementById('measurementValue').value) || 0;
+            const unit = document.getElementById('measurementUnit').value;
+
+            // Convert to lbs and cuft based on input
+            switch(unit) {
+                case 'lbs':
+                    weightLbs = value;
+                    volumeCuft = value / DENSITY;
+                    break;
+                case 'kg':
+                    weightLbs = value * LBS_PER_KG;
+                    volumeCuft = weightLbs / DENSITY;
+                    break;
+                case 'cuft':
+                    volumeCuft = value;
+                    weightLbs = value * DENSITY;
+                    break;
+                case 'cbm':
+                    volumeCuft = value * CUFT_PER_CBM;
+                    weightLbs = volumeCuft * DENSITY;
+                    break;
+            }
+
+            // Update display
+            const weightKg = weightLbs / LBS_PER_KG;
+            const volumeCbm = volumeCuft / CUFT_PER_CBM;
+
+            document.getElementById('displayWeight').textContent = 
+                `${weightLbs.toFixed(0)} lbs (${weightKg.toFixed(2)} kg)`;
+            document.getElementById('displayVolume').textContent = 
+                `${volumeCuft.toFixed(2)} cu ft (${volumeCbm.toFixed(3)} cbm)`;
+
+            calculate();
+        }
+
+        function setServiceType(type) {
+            serviceType = type;
+            document.querySelectorAll('.toggle-container .toggle-btn').forEach((btn, idx) => {
+                if (idx === 0 && type === 'origin' || idx === 1 && type === 'destination') {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Update service prices based on type
+            if (type === 'destination') {
+                document.getElementById('carblockPrice').textContent = '$300.00';
+                document.getElementById('motorcyclePrice').textContent = '$200.00';
+            } else {
+                document.getElementById('carblockPrice').textContent = '$350.00';
+                document.getElementById('motorcyclePrice').textContent = '$250.00';
+            }
+            
+            calculate();
+        }
+
+        function calculateBaseRate(weight) {
+            if (serviceType === 'origin') {
+                // Origin service rates
+                if (weight < 600) return 0;
+                if (weight <= 600) return 487.03;
+                if (weight <= 999) return 487.03 + ((weight - 600) / 100) * 76.53;
+                if (weight <= 1999) return 487.03 + ((weight - 600) / 100) * 68.85;
+                if (weight <= 3999) return 487.03 + ((weight - 600) / 100) * 68.85;
+                if (weight <= 6999) return 487.03 + ((weight - 600) / 100) * 65.82;
+                if (weight <= 9999) return 487.03 + ((weight - 600) / 100) * 64.25;
+                return 487.03 + ((weight - 600) / 100) * 62.73;
+            } else {
+                // Destination service rates
+                if (weight < 600) return 0;
+                if (weight <= 600) return 473.00;
+                if (weight <= 999) return 473.00 + ((weight - 600) / 100) * 41.32;
+                if (weight <= 1999) return 473.00 + ((weight - 600) / 100) * 41.32;
+                if (weight <= 3999) return 473.00 + ((weight - 600) / 100) * 41.32;
+                if (weight <= 5999) return 473.00 + ((weight - 600) / 100) * 37.57;
+                if (weight <= 7999) return 473.00 + ((weight - 600) / 100) * 35.94;
+                if (weight <= 9999) return 473.00 + ((weight - 600) / 100) * 32.91;
+                return 473.00 + ((weight - 600) / 100) * 30.61;
+            }
+        }
+
+        function calculate() {
+            const weight = weightLbs;
+            const volume = volumeCuft;
+            const distance = parseFloat(document.getElementById('distance').value) || 0;
+
+            if (weight === 0) {
+                document.getElementById('results').style.display = 'none';
+                return;
+            }
+
+            // Calculate base rate
+            let baseRate = calculateBaseRate(weight);
+            
+            // Add WHH if included in base
+            const whhIncluded = document.getElementById('whh').checked;
+            if (whhIncluded) {
+                baseRate += (weight / 100) * 9.50;
+            }
+
+            let total = baseRate;
+            let additionalCharges = [];
+
+            // Distance charge
+            let distanceCharge = 0;
+            if (distance > 50) {
+                distanceCharge = (distance - 50) * 3.75;
+                total += distanceCharge;
+            }
+
+            // Special Packaging
+            const cosCartons = parseInt(document.getElementById('cosCartons').value) || 0;
+            const co8Cartons = parseInt(document.getElementById('co8Cartons').value) || 0;
+            const liftVans = parseInt(document.getElementById('liftVans').value) || 0;
+            
+            let packagingTotal = 0;
+            if (cosCartons > 0) {
+                packagingTotal += cosCartons * 225;
+            }
+            if (co8Cartons > 0) {
+                packagingTotal += co8Cartons * 275;
+            }
+            if (liftVans > 0) {
+                packagingTotal += liftVans * 470;
+            }
+            if (packagingTotal > 0) {
+                total += packagingTotal;
+            }
+
+            // P&D Charges
+            let pdCharge = 0;
+            const pdType = document.getElementById('pdChargeType').value;
+            switch(pdType) {
+                case 'sea':
+                    pdCharge = 800;
+                    break;
+                case 'lcl':
+                    pdCharge = 370;
+                    break;
+                case 'air':
+                    pdCharge = 300;
+                    break;
+            }
+            if (pdCharge > 0) {
+                total += pdCharge;
+            }
+
+            // Additional services
+            if (document.getElementById('sit').checked) {
+                const sitCharge = (weight / 100) * 8.50;
+                additionalCharges.push({ label: 'Storage in Transit', value: sitCharge });
+                total += sitCharge;
+            }
+
+            if (document.getElementById('piano').checked) {
+                additionalCharges.push({ label: 'Piano Handling', value: 300 });
+                total += 300;
+            }
+
+            if (document.getElementById('access').checked) {
+                const accessCharge = (weight / 100) * 6.00;
+                additionalCharges.push({ label: 'Access Charge', value: accessCharge });
+                total += accessCharge;
+            }
+
+            if (document.getElementById('stairs').checked) {
+                const stairsCharge = (weight / 100) * 6.00;
+                additionalCharges.push({ label: 'Stair Carry', value: stairsCharge });
+                total += stairsCharge;
+            }
+
+            if (document.getElementById('parking').checked) {
+                additionalCharges.push({ label: 'Parking Permit', value: 375 });
+                total += 375;
+            }
+
+            if (document.getElementById('quebec').checked) {
+                additionalCharges.push({ label: 'Quebec Surcharge', value: 450 });
+                total += 450;
+            }
+
+            if (document.getElementById('ottawa').checked) {
+                additionalCharges.push({ label: 'Ottawa Surcharge', value: 450 });
+                total += 450;
+            }
+
+            if (document.getElementById('carblock').checked) {
+                const carCost = serviceType === 'origin' ? 350 : 300;
+                additionalCharges.push({ label: 'Car Block & Brace', value: carCost });
+                total += carCost;
+            }
+
+            if (document.getElementById('motorcycle').checked) {
+                const motoCost = serviceType === 'origin' ? 250 : 200;
+                additionalCharges.push({ label: 'Motorcycle Block & Brace', value: motoCost });
+                total += motoCost;
+            }
+
+            // Display results
+            const weightKg = weight / LBS_PER_KG;
+            const volumeCbm = volume / CUFT_PER_CBM;
+            
+            document.getElementById('calcWeight').textContent = 
+                `${weight.toFixed(0)} lbs (${weightKg.toFixed(2)} kg)`;
+            document.getElementById('calcVolume').textContent = 
+                `${volume.toFixed(2)} cu ft (${volumeCbm.toFixed(3)} cbm)`;
+            document.getElementById('baseRate').textContent = '$' + baseRate.toFixed(2);
+            
+            if (distance > 50) {
+                document.getElementById('distanceChargeRow').style.display = 'flex';
+                document.getElementById('distanceCharge').textContent = '$' + distanceCharge.toFixed(2);
+            } else {
+                document.getElementById('distanceChargeRow').style.display = 'none';
+            }
+
+            // Display special packaging
+            if (packagingTotal > 0) {
+                document.getElementById('packagingChargesRow').style.display = 'flex';
+                let packagingDetails = [];
+                if (cosCartons > 0) packagingDetails.push(`${cosCartons} COS`);
+                if (co8Cartons > 0) packagingDetails.push(`${co8Cartons} CO8/CO7`);
+                if (liftVans > 0) packagingDetails.push(`${liftVans} Lift Van(s)`);
+                document.getElementById('packagingCharges').textContent = 
+                    '$' + packagingTotal.toFixed(2) + ' (' + packagingDetails.join(', ') + ')';
+            } else {
+                document.getElementById('packagingChargesRow').style.display = 'none';
+            }
+
+            // Display P&D charges
+            if (pdCharge > 0) {
+                document.getElementById('pdChargesRow').style.display = 'flex';
+                const pdLabel = pdType === 'sea' ? 'SEA' : pdType === 'lcl' ? 'LCL' : 'AIR';
+                document.getElementById('pdCharges').textContent = 
+                    '$' + pdCharge.toFixed(2) + ' (' + pdLabel + ' Shipment)';
+            } else {
+                document.getElementById('pdChargesRow').style.display = 'none';
+            }
+
+            // Display additional charges
+            const additionalChargesDiv = document.getElementById('additionalCharges');
+            additionalChargesDiv.innerHTML = '';
+            additionalCharges.forEach(charge => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                    <span class="result-label">${charge.label}:</span>
+                    <span class="result-value">$${charge.value.toFixed(2)}</span>
+                `;
+                additionalChargesDiv.appendChild(div);
+            });
+
+            document.getElementById('totalCost').textContent = '$' + total.toFixed(2);
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('exportPdfBtn').style.display = 'block';
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            let yPos = 20;
+
+            // Header
+            doc.setFillColor(44, 62, 80);
+            doc.rect(0, 0, pageWidth, 35, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
+            doc.text('JOHN GRAY MOVING', pageWidth / 2, 15, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Moving Services Quote - 2026', pageWidth / 2, 25, { align: 'center' });
+            
+            yPos = 45;
+            doc.setTextColor(0, 0, 0);
+
+            // Service Type
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Service Type: ${serviceType === 'origin' ? 'ORIGIN SERVICES' : 'DESTINATION SERVICES'}`, margin, yPos);
+            yPos += 5;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, margin, yPos);
+            yPos += 10;
+
+            // Shipment Details Box
+            doc.setFillColor(248, 249, 250);
+            doc.rect(margin, yPos, pageWidth - 2 * margin, 25, 'F');
+            
+            yPos += 7;
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.text('SHIPMENT DETAILS', margin + 5, yPos);
+            
+            yPos += 7;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            
+            const weightKg = weightLbs / LBS_PER_KG;
+            const volumeCbm = volumeCuft / CUFT_PER_CBM;
+            
+            doc.text(`Weight: ${weightLbs.toFixed(0)} lbs (${weightKg.toFixed(2)} kg)`, margin + 5, yPos);
+            doc.text(`Volume: ${volumeCuft.toFixed(2)} cu ft (${volumeCbm.toFixed(3)} cbm)`, pageWidth / 2 + 5, yPos);
+            
+            yPos += 6;
+            const distance = parseFloat(document.getElementById('distance').value) || 0;
+            if (distance > 0) {
+                doc.text(`Distance from warehouse: ${distance} km`, margin + 5, yPos);
+                yPos += 6;
+            }
+            
+            yPos += 8;
+
+            // Cost Breakdown
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.text('COST BREAKDOWN', margin, yPos);
+            yPos += 7;
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+
+            // Collect all line items
+            const lineItems = [];
+            
+            // Base rate
+            const baseRate = parseFloat(document.getElementById('baseRate').textContent.replace('$', ''));
+            lineItems.push({ label: 'Base Service Rate', value: baseRate });
+
+            // Distance charge
+            if (distance > 50) {
+                const distCharge = (distance - 50) * 3.75;
+                lineItems.push({ label: `Out of Area Charge (${distance - 50} km)`, value: distCharge });
+            }
+
+            // Special packaging
+            const cosCartons = parseInt(document.getElementById('cosCartons').value) || 0;
+            const co8Cartons = parseInt(document.getElementById('co8Cartons').value) || 0;
+            const liftVans = parseInt(document.getElementById('liftVans').value) || 0;
+            
+            if (cosCartons > 0) {
+                lineItems.push({ label: `COS Cartons (${cosCartons} @ $225.00)`, value: cosCartons * 225 });
+            }
+            if (co8Cartons > 0) {
+                lineItems.push({ label: `CO8/CO7 Cartons (${co8Cartons} @ $275.00)`, value: co8Cartons * 275 });
+            }
+            if (liftVans > 0) {
+                lineItems.push({ label: `Lift Vans (${liftVans} @ $470.00)`, value: liftVans * 470 });
+            }
+
+            // P&D Charges
+            const pdType = document.getElementById('pdChargeType').value;
+            if (pdType !== 'none') {
+                let pdValue = 0;
+                let pdLabel = '';
+                if (pdType === 'sea') { pdValue = 800; pdLabel = 'P&D - SEA Shipment'; }
+                else if (pdType === 'lcl') { pdValue = 370; pdLabel = 'P&D - LCL Shipment'; }
+                else if (pdType === 'air') { pdValue = 300; pdLabel = 'P&D - AIR Shipment'; }
+                lineItems.push({ label: pdLabel, value: pdValue });
+            }
+
+            // Additional services
+            if (document.getElementById('whh').checked) {
+                lineItems.push({ label: 'Warehouse Handling (IN & OUT)', value: (weightLbs / 100) * 9.50 });
+            }
+            if (document.getElementById('sit').checked) {
+                lineItems.push({ label: 'Storage in Transit', value: (weightLbs / 100) * 8.50 });
+            }
+            if (document.getElementById('piano').checked) {
+                lineItems.push({ label: 'Piano Handling', value: 300 });
+            }
+            if (document.getElementById('access').checked) {
+                lineItems.push({ label: 'Access Charge', value: (weightLbs / 100) * 6.00 });
+            }
+            if (document.getElementById('stairs').checked) {
+                lineItems.push({ label: 'Stair Carry', value: (weightLbs / 100) * 6.00 });
+            }
+            if (document.getElementById('parking').checked) {
+                lineItems.push({ label: 'Parking Permit', value: 375 });
+            }
+            if (document.getElementById('quebec').checked) {
+                lineItems.push({ label: 'Quebec Surcharge', value: 450 });
+            }
+            if (document.getElementById('ottawa').checked) {
+                lineItems.push({ label: 'Ottawa Surcharge', value: 450 });
+            }
+            if (document.getElementById('carblock').checked) {
+                const carCost = serviceType === 'origin' ? 350 : 300;
+                lineItems.push({ label: 'Car Block & Brace', value: carCost });
+            }
+            if (document.getElementById('motorcycle').checked) {
+                const motoCost = serviceType === 'origin' ? 250 : 200;
+                lineItems.push({ label: 'Motorcycle Block & Brace', value: motoCost });
+            }
+
+            // Draw line items
+            lineItems.forEach((item, index) => {
+                if (yPos > pageHeight - 40) {
+                    // Not enough space, truncate
+                    return;
+                }
+                
+                doc.text(item.label, margin + 2, yPos);
+                doc.text(`$${item.value.toFixed(2)}`, pageWidth - margin - 2, yPos, { align: 'right' });
+                yPos += 6;
+            });
+
+            // Draw separator line
+            yPos += 2;
+            doc.setLineWidth(0.5);
+            doc.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += 8;
+
+            // Total
+            doc.setFillColor(102, 126, 234);
+            doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 15, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            
+            const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace('$', ''));
+            doc.text('TOTAL ESTIMATED COST:', margin + 5, yPos + 4);
+            doc.text(`$${totalCost.toFixed(2)}`, pageWidth - margin - 5, yPos + 4, { align: 'right' });
+            
+            yPos += 20;
+            doc.setTextColor(0, 0, 0);
+
+            // Important Notes
+            if (yPos < pageHeight - 50) {
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text('IMPORTANT NOTES:', margin, yPos);
+                yPos += 6;
+                
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                
+                const notes = [
+                    '• This is an estimate based on the 2026 contractor rate agreement.',
+                    '• Final costs may vary based on specific circumstances and actual conditions.',
+                    '• Materials are included in base rates by John Gray Moving.',
+                    '• Density conversion: 7 lbs per cubic foot.',
+                    '• Out of area charge applies beyond 50 km radius of warehouse.',
+                    '• Some services (baby grand piano, disposal fees, custom crating) require separate quotes.'
+                ];
+                
+                notes.forEach(note => {
+                    if (yPos < pageHeight - 15) {
+                        doc.text(note, margin, yPos);
+                        yPos += 5;
+                    }
+                });
+            }
+
+            // Footer
+            doc.setFontSize(7);
+            doc.setTextColor(128, 128, 128);
+            doc.text('John Gray Moving - Contractor Rate Agreement 2026', pageWidth / 2, pageHeight - 10, { align: 'center' });
+            doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 6, { align: 'center' });
+
+            // Save PDF
+            const fileName = `JohnGrayMoving_Quote_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+        }
+
+        // Initialize with default values
+        document.addEventListener('DOMContentLoaded', function() {
+            setServiceType('origin');
+        });
+    </script>
+</body>
+</html>
