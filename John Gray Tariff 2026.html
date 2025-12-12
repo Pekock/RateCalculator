@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>John Gray Moving - Rate Calculator 2026</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -479,12 +478,12 @@
 
             <button class="calculate-btn" onclick="calculate()">Calculate Total Cost</button>
 
-            <button class="calculate-btn" id="exportPdfBtn" onclick="exportToPDF()" style="display: none; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); margin-top: 15px;">
-                📄 Export Quote to PDF
-            </button>
-
             <div class="calculator-section results" id="results" style="display: none;">
                 <h2 class="section-title">Cost Breakdown</h2>
+                
+                <button class="calculate-btn" onclick="exportToPDF()" style="margin-bottom: 20px; background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+                    Export to PDF
+                </button>
                 
                 <div class="result-item">
                     <span class="result-label">Calculated Weight:</span>
@@ -532,7 +531,9 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
+        const { jsPDF } = window.jspdf;
         let serviceType = 'origin';
         const DENSITY = 7; // lbs per cu ft
         const LBS_PER_KG = 2.20462;
@@ -601,51 +602,62 @@
         }
 
         function calculateBaseRate(weight) {
+            const cwt = weight / 100; // Convert pounds to hundredweight
+            
             if (serviceType === 'origin') {
-                // Origin service rates
+                // Origin service rates - entire weight charged at bracket rate
                 if (weight < 600) return 0;
-                if (weight <= 600) return 487.03;
-                if (weight <= 999) return 487.03 + ((weight - 600) / 100) * 76.53;
-                if (weight <= 1999) return 487.03 + ((weight - 600) / 100) * 68.85;
-                if (weight <= 3999) return 487.03 + ((weight - 600) / 100) * 68.85;
-                if (weight <= 6999) return 487.03 + ((weight - 600) / 100) * 65.82;
-                if (weight <= 9999) return 487.03 + ((weight - 600) / 100) * 64.25;
-                return 487.03 + ((weight - 600) / 100) * 62.73;
+                if (weight <= 600) return 487.03; // Flat rate for minimum
+                if (weight <= 999) return cwt * 76.53;
+                if (weight <= 1999) return cwt * 68.85;
+                if (weight <= 3999) return cwt * 68.85;
+                if (weight <= 6999) return cwt * 65.82;
+                if (weight <= 9999) return cwt * 64.25;
+                return cwt * 62.73; // 10000+ lbs
             } else {
-                // Destination service rates
+                // Destination service rates - entire weight charged at bracket rate
                 if (weight < 600) return 0;
-                if (weight <= 600) return 473.00;
-                if (weight <= 999) return 473.00 + ((weight - 600) / 100) * 41.32;
-                if (weight <= 1999) return 473.00 + ((weight - 600) / 100) * 41.32;
-                if (weight <= 3999) return 473.00 + ((weight - 600) / 100) * 41.32;
-                if (weight <= 5999) return 473.00 + ((weight - 600) / 100) * 37.57;
-                if (weight <= 7999) return 473.00 + ((weight - 600) / 100) * 35.94;
-                if (weight <= 9999) return 473.00 + ((weight - 600) / 100) * 32.91;
-                return 473.00 + ((weight - 600) / 100) * 30.61;
+                if (weight <= 600) return 473.00; // Flat rate for minimum
+                if (weight <= 999) return cwt * 41.32;
+                if (weight <= 1999) return cwt * 41.32;
+                if (weight <= 3999) return cwt * 41.32;
+                if (weight <= 5999) return cwt * 37.57;
+                if (weight <= 7999) return cwt * 35.94;
+                if (weight <= 9999) return cwt * 32.91;
+                return cwt * 30.61; // 10000+ lbs
             }
         }
 
         function calculate() {
-            const weight = weightLbs;
+            let weight = weightLbs;
             const volume = volumeCuft;
             const distance = parseFloat(document.getElementById('distance').value) || 0;
+            const pdType = document.getElementById('pdChargeType').value;
 
             if (weight === 0) {
                 document.getElementById('results').style.display = 'none';
                 return;
             }
 
-            // Calculate base rate
-            let baseRate = calculateBaseRate(weight);
-            
-            // Add WHH if included in base
-            const whhIncluded = document.getElementById('whh').checked;
-            if (whhIncluded) {
-                baseRate += (weight / 100) * 9.50;
+            // Apply minimum weight for FCL SEA
+            const actualWeight = weight;
+            if (pdType === 'sea' && weight < 4000) {
+                weight = 4000; // Apply 4000 lbs minimum for FCL SEA
             }
 
+            // Calculate base rate (without WHH)
+            let baseRate = calculateBaseRate(weight);
+            
             let total = baseRate;
             let additionalCharges = [];
+
+            // Add WHH as separate line item if checked
+            const whhIncluded = document.getElementById('whh').checked;
+            if (whhIncluded) {
+                const whhCharge = (weight / 100) * 9.50;
+                additionalCharges.push({ label: 'Warehouse Handling (IN & OUT)', value: whhCharge });
+                total += whhCharge;
+            }
 
             // Distance charge
             let distanceCharge = 0;
@@ -675,7 +687,6 @@
 
             // P&D Charges
             let pdCharge = 0;
-            const pdType = document.getElementById('pdChargeType').value;
             switch(pdType) {
                 case 'sea':
                     pdCharge = 800;
@@ -743,11 +754,15 @@
             }
 
             // Display results
-            const weightKg = weight / LBS_PER_KG;
+            const weightKg = actualWeight / LBS_PER_KG;
             const volumeCbm = volume / CUFT_PER_CBM;
             
-            document.getElementById('calcWeight').textContent = 
-                `${weight.toFixed(0)} lbs (${weightKg.toFixed(2)} kg)`;
+            let weightDisplay = `${actualWeight.toFixed(0)} lbs (${weightKg.toFixed(2)} kg)`;
+            if (pdType === 'sea' && actualWeight < 4000) {
+                weightDisplay += ` [Billed at 4000 lbs minimum for FCL SEA]`;
+            }
+            
+            document.getElementById('calcWeight').textContent = weightDisplay;
             document.getElementById('calcVolume').textContent = 
                 `${volume.toFixed(2)} cu ft (${volumeCbm.toFixed(3)} cbm)`;
             document.getElementById('baseRate').textContent = '$' + baseRate.toFixed(2);
@@ -797,229 +812,158 @@
 
             document.getElementById('totalCost').textContent = '$' + total.toFixed(2);
             document.getElementById('results').style.display = 'block';
-            document.getElementById('exportPdfBtn').style.display = 'block';
-        }
-
-        function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 15;
-            let yPos = 20;
-
-            // Header
-            doc.setFillColor(44, 62, 80);
-            doc.rect(0, 0, pageWidth, 35, 'F');
-            
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(24);
-            doc.setFont('helvetica', 'bold');
-            doc.text('JOHN GRAY MOVING', pageWidth / 2, 15, { align: 'center' });
-            
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Moving Services Quote - 2026', pageWidth / 2, 25, { align: 'center' });
-            
-            yPos = 45;
-            doc.setTextColor(0, 0, 0);
-
-            // Service Type
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Service Type: ${serviceType === 'origin' ? 'ORIGIN SERVICES' : 'DESTINATION SERVICES'}`, margin, yPos);
-            yPos += 5;
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.text(`Date: ${new Date().toLocaleDateString()}`, margin, yPos);
-            yPos += 10;
-
-            // Shipment Details Box
-            doc.setFillColor(248, 249, 250);
-            doc.rect(margin, yPos, pageWidth - 2 * margin, 25, 'F');
-            
-            yPos += 7;
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.text('SHIPMENT DETAILS', margin + 5, yPos);
-            
-            yPos += 7;
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            
-            const weightKg = weightLbs / LBS_PER_KG;
-            const volumeCbm = volumeCuft / CUFT_PER_CBM;
-            
-            doc.text(`Weight: ${weightLbs.toFixed(0)} lbs (${weightKg.toFixed(2)} kg)`, margin + 5, yPos);
-            doc.text(`Volume: ${volumeCuft.toFixed(2)} cu ft (${volumeCbm.toFixed(3)} cbm)`, pageWidth / 2 + 5, yPos);
-            
-            yPos += 6;
-            const distance = parseFloat(document.getElementById('distance').value) || 0;
-            if (distance > 0) {
-                doc.text(`Distance from warehouse: ${distance} km`, margin + 5, yPos);
-                yPos += 6;
-            }
-            
-            yPos += 8;
-
-            // Cost Breakdown
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.text('COST BREAKDOWN', margin, yPos);
-            yPos += 7;
-
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-
-            // Collect all line items
-            const lineItems = [];
-            
-            // Base rate
-            const baseRate = parseFloat(document.getElementById('baseRate').textContent.replace('$', ''));
-            lineItems.push({ label: 'Base Service Rate', value: baseRate });
-
-            // Distance charge
-            if (distance > 50) {
-                const distCharge = (distance - 50) * 3.75;
-                lineItems.push({ label: `Out of Area Charge (${distance - 50} km)`, value: distCharge });
-            }
-
-            // Special packaging
-            const cosCartons = parseInt(document.getElementById('cosCartons').value) || 0;
-            const co8Cartons = parseInt(document.getElementById('co8Cartons').value) || 0;
-            const liftVans = parseInt(document.getElementById('liftVans').value) || 0;
-            
-            if (cosCartons > 0) {
-                lineItems.push({ label: `COS Cartons (${cosCartons} @ $225.00)`, value: cosCartons * 225 });
-            }
-            if (co8Cartons > 0) {
-                lineItems.push({ label: `CO8/CO7 Cartons (${co8Cartons} @ $275.00)`, value: co8Cartons * 275 });
-            }
-            if (liftVans > 0) {
-                lineItems.push({ label: `Lift Vans (${liftVans} @ $470.00)`, value: liftVans * 470 });
-            }
-
-            // P&D Charges
-            const pdType = document.getElementById('pdChargeType').value;
-            if (pdType !== 'none') {
-                let pdValue = 0;
-                let pdLabel = '';
-                if (pdType === 'sea') { pdValue = 800; pdLabel = 'P&D - SEA Shipment'; }
-                else if (pdType === 'lcl') { pdValue = 370; pdLabel = 'P&D - LCL Shipment'; }
-                else if (pdType === 'air') { pdValue = 300; pdLabel = 'P&D - AIR Shipment'; }
-                lineItems.push({ label: pdLabel, value: pdValue });
-            }
-
-            // Additional services
-            if (document.getElementById('whh').checked) {
-                lineItems.push({ label: 'Warehouse Handling (IN & OUT)', value: (weightLbs / 100) * 9.50 });
-            }
-            if (document.getElementById('sit').checked) {
-                lineItems.push({ label: 'Storage in Transit', value: (weightLbs / 100) * 8.50 });
-            }
-            if (document.getElementById('piano').checked) {
-                lineItems.push({ label: 'Piano Handling', value: 300 });
-            }
-            if (document.getElementById('access').checked) {
-                lineItems.push({ label: 'Access Charge', value: (weightLbs / 100) * 6.00 });
-            }
-            if (document.getElementById('stairs').checked) {
-                lineItems.push({ label: 'Stair Carry', value: (weightLbs / 100) * 6.00 });
-            }
-            if (document.getElementById('parking').checked) {
-                lineItems.push({ label: 'Parking Permit', value: 375 });
-            }
-            if (document.getElementById('quebec').checked) {
-                lineItems.push({ label: 'Quebec Surcharge', value: 450 });
-            }
-            if (document.getElementById('ottawa').checked) {
-                lineItems.push({ label: 'Ottawa Surcharge', value: 450 });
-            }
-            if (document.getElementById('carblock').checked) {
-                const carCost = serviceType === 'origin' ? 350 : 300;
-                lineItems.push({ label: 'Car Block & Brace', value: carCost });
-            }
-            if (document.getElementById('motorcycle').checked) {
-                const motoCost = serviceType === 'origin' ? 250 : 200;
-                lineItems.push({ label: 'Motorcycle Block & Brace', value: motoCost });
-            }
-
-            // Draw line items
-            lineItems.forEach((item, index) => {
-                if (yPos > pageHeight - 40) {
-                    // Not enough space, truncate
-                    return;
-                }
-                
-                doc.text(item.label, margin + 2, yPos);
-                doc.text(`$${item.value.toFixed(2)}`, pageWidth - margin - 2, yPos, { align: 'right' });
-                yPos += 6;
-            });
-
-            // Draw separator line
-            yPos += 2;
-            doc.setLineWidth(0.5);
-            doc.line(margin, yPos, pageWidth - margin, yPos);
-            yPos += 8;
-
-            // Total
-            doc.setFillColor(102, 126, 234);
-            doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 15, 'F');
-            
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            
-            const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace('$', ''));
-            doc.text('TOTAL ESTIMATED COST:', margin + 5, yPos + 4);
-            doc.text(`$${totalCost.toFixed(2)}`, pageWidth - margin - 5, yPos + 4, { align: 'right' });
-            
-            yPos += 20;
-            doc.setTextColor(0, 0, 0);
-
-            // Important Notes
-            if (yPos < pageHeight - 50) {
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text('IMPORTANT NOTES:', margin, yPos);
-                yPos += 6;
-                
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                
-                const notes = [
-                    '• This is an estimate based on the 2026 contractor rate agreement.',
-                    '• Final costs may vary based on specific circumstances and actual conditions.',
-                    '• Materials are included in base rates by John Gray Moving.',
-                    '• Density conversion: 7 lbs per cubic foot.',
-                    '• Out of area charge applies beyond 50 km radius of warehouse.',
-                    '• Some services (baby grand piano, disposal fees, custom crating) require separate quotes.'
-                ];
-                
-                notes.forEach(note => {
-                    if (yPos < pageHeight - 15) {
-                        doc.text(note, margin, yPos);
-                        yPos += 5;
-                    }
-                });
-            }
-
-            // Footer
-            doc.setFontSize(7);
-            doc.setTextColor(128, 128, 128);
-            doc.text('John Gray Moving - Contractor Rate Agreement 2026', pageWidth / 2, pageHeight - 10, { align: 'center' });
-            doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 6, { align: 'center' });
-
-            // Save PDF
-            const fileName = `JohnGrayMoving_Quote_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
         }
 
         // Initialize with default values
         document.addEventListener('DOMContentLoaded', function() {
             setServiceType('origin');
         });
+
+        function exportToPDF() {
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            let yPos = 20;
+
+            // Header
+            doc.setFillColor(44, 62, 80);
+            doc.rect(0, 0, pageWidth, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.text('John Gray Moving', pageWidth / 2, 20, { align: 'center' });
+            doc.setFontSize(14);
+            doc.text('Rate Calculator 2026', pageWidth / 2, 30, { align: 'center' });
+
+            yPos = 50;
+            doc.setTextColor(0, 0, 0);
+
+            // Service Type
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('Quote Details', 20, yPos);
+            yPos += 10;
+
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            const serviceTypeText = serviceType === 'origin' ? 'Origin Service' : 'Destination Service';
+            doc.text(`Service Type: ${serviceTypeText}`, 20, yPos);
+            yPos += 8;
+
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, yPos);
+            yPos += 15;
+
+            // Shipment Details
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Shipment Details', 20, yPos);
+            yPos += 8;
+
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Weight: ${document.getElementById('calcWeight').textContent}`, 20, yPos);
+            yPos += 7;
+            doc.text(`Volume: ${document.getElementById('calcVolume').textContent}`, 20, yPos);
+            yPos += 7;
+
+            const pdTypeValue = document.getElementById('pdChargeType').value;
+            if (pdTypeValue !== 'none') {
+                const pdLabel = pdTypeValue === 'sea' ? 'FCL SEA' : pdTypeValue === 'lcl' ? 'LCL' : 'AIR';
+                doc.text(`Shipment Type: ${pdLabel}`, 20, yPos);
+                yPos += 7;
+            }
+
+            const distance = parseFloat(document.getElementById('distance').value) || 0;
+            if (distance > 0) {
+                doc.text(`Distance: ${distance} miles`, 20, yPos);
+                yPos += 7;
+            }
+
+            yPos += 8;
+
+            // Cost Breakdown
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Cost Breakdown', 20, yPos);
+            yPos += 8;
+
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+
+            // Base Rate
+            const baseRate = document.getElementById('baseRate').textContent;
+            doc.text('Base Service Rate:', 20, yPos);
+            doc.text(baseRate, pageWidth - 40, yPos, { align: 'right' });
+            yPos += 7;
+
+            // Distance Charge
+            const distanceRow = document.getElementById('distanceChargeRow');
+            if (distanceRow.style.display !== 'none') {
+                const distCharge = document.getElementById('distanceCharge').textContent;
+                doc.text('Out of Area Charge:', 20, yPos);
+                doc.text(distCharge, pageWidth - 40, yPos, { align: 'right' });
+                yPos += 7;
+            }
+
+            // Special Packaging
+            const packagingRow = document.getElementById('packagingChargesRow');
+            if (packagingRow.style.display !== 'none') {
+                const packCharge = document.getElementById('packagingCharges').textContent;
+                doc.text('Special Packaging:', 20, yPos);
+                const chargeText = packCharge.split('(')[0].trim();
+                doc.text(chargeText, pageWidth - 40, yPos, { align: 'right' });
+                yPos += 7;
+            }
+
+            // P&D Charges
+            const pdRow = document.getElementById('pdChargesRow');
+            if (pdRow.style.display !== 'none') {
+                const pdCharge = document.getElementById('pdCharges').textContent;
+                doc.text('Pick Up & Delivery:', 20, yPos);
+                const chargeText = pdCharge.split('(')[0].trim();
+                doc.text(chargeText, pageWidth - 40, yPos, { align: 'right' });
+                yPos += 7;
+            }
+
+            // Additional Services
+            const additionalDiv = document.getElementById('additionalCharges');
+            if (additionalDiv.children.length > 0) {
+                yPos += 3;
+                doc.setFont(undefined, 'bold');
+                doc.text('Additional Services:', 20, yPos);
+                doc.setFont(undefined, 'normal');
+                yPos += 7;
+
+                Array.from(additionalDiv.children).forEach(item => {
+                    const label = item.querySelector('.result-label').textContent.replace(':', '');
+                    const value = item.querySelector('.result-value').textContent;
+                    doc.text(label, 25, yPos);
+                    doc.text(value, pageWidth - 40, yPos, { align: 'right' });
+                    yPos += 7;
+                });
+            }
+
+            // Total
+            yPos += 5;
+            doc.setFillColor(102, 126, 234);
+            doc.rect(15, yPos - 5, pageWidth - 30, 12, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Total Cost:', 20, yPos + 3);
+            const totalCost = document.getElementById('totalCost').textContent;
+            doc.text(totalCost, pageWidth - 40, yPos + 3, { align: 'right' });
+
+            // Footer
+            yPos = 280;
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            doc.text('This quote is valid for 30 days from the date of issue.', pageWidth / 2, yPos, { align: 'center' });
+            doc.text('Rates are subject to change. Please confirm before booking.', pageWidth / 2, yPos + 5, { align: 'center' });
+
+            // Save
+            const dateStr = new Date().toISOString().split('T')[0];
+            doc.save(`John_Gray_Moving_Quote_${dateStr}.pdf`);
+        }
     </script>
 </body>
 </html>
